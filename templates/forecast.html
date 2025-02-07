@@ -7,9 +7,8 @@
 <div class="row">
   <div class="col-12 mb-3">
     <div class="card">
-        <div class="card-body">   
-        <canvas id="forecastChart" style="width:100%; height:400px;"></canvas>
-          ///letak plot
+        <div class="card-body">
+          <div id="forecastResult" style="width:100%; height:400px;"></div>
         </div>
       </div>
   </div>
@@ -30,85 +29,104 @@
                       <th scope="col">Lower Value</th>
                   </tr>
               </thead>
-              <tbody>
-                  <tr>
-                      <td>01-01-2025</td>
-                      <td>23,000</td>
-                      <td>23,000</td>
-                      <td>23,000</td>
-                  </tr>
-                  <tr>
-                      <td>02-01-2025</td>
-                      <td>21,000</td>
-                  </tr>
-                  <tr>
-                      <td>03-01-2025</td>
-                      <td>22,000</td>
-                  </tr>
-                  <tr>
-                      <td>04-01-2025</td>
-                      <td>24,000</td>
-                  </tr>
-                  <tr>
-                      <td>05-01-2025</td>
-                      <td>25,000</td>
-                  </tr>
-                  <tr>
-                      <td>06-01-2025</td>
-                      <td>21,000</td>
-                  </tr>
-                  <tr>
-                      <td>07-01-2025</td>
-                      <td>27,000</td>
-                  </tr>
-                  <tr>
-                      <td>08-01-2025</td>
-                      <td>25,000</td>
-                  </tr>
-                  <tr>
-                      <td>09-01-2025</td>
-                      <td>22,000</td>
-                  </tr>
-                  <tr>
-                      <td>10-01-2025</td>
-                      <td>21,000</td>
-                  </tr>
+              <tbody id="forecastTableBody">
+                  <!-- Data tabel akan diisi oleh JavaScript -->
               </tbody>
           </table>
       </div>
       </div>
     </div>
   </div>
+
   <div class="col-sm-6">
     <div class="card text-white bg-dark mb-3">
       <div class="card-body">
-        <h5 class="card-title">TABLE 2</h5>
+        <h5 class="card-title">Actual v Forecast</h5>
         <div class="table-responsive">
           <table class="table table-striped table-hover">
-            <thead class="thead-dark">
-              <tr>
-                <th scope="col">DATE</th>
-                <th scope="col">VALUE</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>01-01-2025</td>
-                <td>23,000</td>
-              </tr>
-              <tr>
-                <td>02-01-2025</td>
-                <td>21,000</td>
-              </tr>
-              <tr>
-                <td>03-01-2025</td>
-                <td>22,000</td>
-              </tr>
-            </tbody>
+              <thead class="thead-dark">
+                  <tr>
+                      <th scope="col">DATE</th>
+                      <th scope="col">Forecast Value</th>
+                      <th scope="col">Actual Value</th>
+                  </tr>
+              </thead>
+              <tbody id="comparisonTableBody">
+                  <!-- Data tabel akan diisi oleh JavaScript -->
+              </tbody>
           </table>
-        </div>
+      </div>
       </div>
     </div>
   </div>
 </div>
+
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    var data = JSON.parse(localStorage.getItem('forecastData'));
+
+    if (data) {
+        // Plot forecast hasil
+        var trace1 = {
+            x: data.dates,
+            y: data.forecast,
+            mode: 'lines',
+            name: 'Forecast'
+        };
+        var trace2 = {
+            x: data.dates,
+            y: data.lower_ci,
+            fill: 'tonexty',
+            mode: 'lines',
+            line: {color: 'rgba(255, 182, 193, 0.2)'},
+            name: 'Lower CI'
+        };
+        var trace3 = {
+            x: data.dates,
+            y: data.upper_ci,
+            fill: 'tonexty',
+            mode: 'lines',
+            line: {color: 'rgba(255, 182, 193, 0.2)'},
+            name: 'Upper CI'
+        };
+
+        var layout = {
+            title: 'Energy Usage Forecasting using SARIMA',
+            xaxis: {title: 'Date'},
+            yaxis: {title: 'Energy Usage'}
+        };
+
+        var plotData = [trace1, trace2, trace3];
+
+        Plotly.newPlot('forecastResult', plotData, layout);
+
+        // Isi tabel forecast data
+        var forecastTableBody = document.getElementById('forecastTableBody');
+        forecastTableBody.innerHTML = ''; // Bersihkan isi tabel sebelumnya
+        for (var i = 0; i < data.dates.length; i++) {
+            var row = `<tr>
+                          <td>${data.dates[i]}</td>
+                          <td>${data.forecast[i]}</td>
+                          <td>${data.upper_ci[i]}</td>
+                          <td>${data.lower_ci[i]}</td>
+                       </tr>`;
+            forecastTableBody.innerHTML += row;
+        }
+
+        // Isi tabel perbandingan actual vs forecast
+        var comparisonTableBody = document.getElementById('comparisonTableBody');
+        comparisonTableBody.innerHTML = ''; // Bersihkan isi tabel sebelumnya
+        for (var i = 0; i < data.dates.length; i++) {
+            var row = `<tr>
+                          <td>${data.dates[i]}</td>
+                          <td>${data.forecast[i]}</td>
+                          <td>${actual[i]}</td>
+                       </tr>`;
+            comparisonTableBody.innerHTML += row;
+        }
+    }
+});
+</script>
+
 {% endblock %}

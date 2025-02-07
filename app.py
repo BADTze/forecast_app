@@ -30,23 +30,22 @@ def about():
 @app.route('/predict', methods=['POST'])
 def predict():
     data = request.get_json(force=True)
-    forecast_period = data.get('forecast_period', 12)
-    exog_forecast = pd.DataFrame({
-        'Overhaul': [0] * forecast_period,
-        'Holidays': [0] * forecast_period
-    }, index=pd.date_range(start='2025-01-01', periods=forecast_period, freq='M'))
+    forecast_period = int(data.get('forecast_period', 12))
+    custom_exog = data.get('custom_exog', {'Overhaul': [0] * forecast_period, 'Holidays': [0] * forecast_period})
     
+    exog_forecast = pd.DataFrame(custom_exog, index=pd.date_range(start='2025-01-01', periods=forecast_period, freq='M'))
+
     predictions = sarima_model.get_forecast(steps=forecast_period, exog=exog_forecast)
     pred_ci = predictions.conf_int()
     pred_ci['forecast'] = predictions.predicted_mean
-    
+
     response = {
         'dates': pred_ci.index.strftime('%Y-%m-%d').tolist(),
         'forecast': pred_ci['forecast'].tolist(),
         'lower_ci': pred_ci.iloc[:, 0].tolist(),
         'upper_ci': pred_ci.iloc[:, 1].tolist()
     }
-    
+
     return jsonify(response)
 
 if __name__ == '__main__':
