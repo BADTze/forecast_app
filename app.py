@@ -39,13 +39,16 @@ def forecast_energy():
             df_actual = pd.read_csv(DATA_PATH)
             df_actual.rename(columns={'Month': 'ds', 'Energy (GJ)': 'y'}, inplace=True)
             df_actual["ds"] = pd.to_datetime(df_actual["ds"], format='%b-%y')
-            
+
             # Gabungkan actual dan forecast berdasarkan tanggal (ds)
             forecast = forecast[["ds", "yhat", "yhat_lower", "yhat_upper"]].merge(
                 df_actual[["ds", "y"]],
                 on="ds",
                 how="left"
             ).rename(columns={"y": "actual_value"})
+
+        # Konversi NaN ke None agar valid dalam JSON
+        forecast = forecast.fillna(None)
 
         # Format tanggal agar bisa ditampilkan
         forecast["ds"] = forecast["ds"].dt.strftime("%Y-%m-%d")
