@@ -63,69 +63,93 @@
 
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    var data = JSON.parse(localStorage.getItem('forecastData'));
+document.addEventListener("DOMContentLoaded", function() {
+    fetch("/api/forecast")  // Ambil data dari Flask API
+        .then(response => response.json())
+        .then(data => {
+            let forecastTableBody = document.getElementById("forecastTableBody");
+            let comparisonTableBody = document.getElementById("comparisonTableBody");
 
-    if (data) {
-        // Plot forecast hasil
-        var trace1 = {
-            x: data.dates,
-            y: data.forecast,
-            mode: 'lines',
-            name: 'Forecast'
-        };
-        var trace2 = {
-            x: data.dates,
-            y: data.lower_ci,
-            fill: 'tonexty',
-            mode: 'lines',
-            line: {color: 'rgba(255, 182, 193, 0.2)'},
-            name: 'Lower CI'
-        };
-        var trace3 = {
-            x: data.dates,
-            y: data.upper_ci,
-            fill: 'tonexty',
-            mode: 'lines',
-            line: {color: 'rgba(255, 182, 193, 0.2)'},
-            name: 'Upper CI'
-        };
+            let labels = [];
+            let forecastValues = [];
+            let upperValues = [];
+            let lowerValues = [];
+            let actualValues = [];
 
-        var layout = {
-            title: 'Energy Usage Forecasting using SARIMA',
-            xaxis: {title: 'Date'},
-            yaxis: {title: 'Energy Usage'}
-        };
+            // Kosongkan tabel sebelum mengisi ulang
+            forecastTableBody.innerHTML = "";
+            comparisonTableBody.innerHTML = "";
 
-        var plotData = [trace1, trace2, trace3];
+            data.forEach(item => {
+                // Tambahkan ke tabel Forecast
+                let forecastRow = `<tr>
+                    <td>${item.ds}</td>
+                    <td>${item.yhat.toFixed(2)}</td>
+                    <td>${item.yhat_upper.toFixed(2)}</td>
+                    <td>${item.yhat_lower.toFixed(2)}</td>
+                </tr>`;
+                forecastTableBody.innerHTML += forecastRow;
 
-        Plotly.newPlot('forecastResult', plotData, layout);
+                // Tambahkan ke tabel Actual vs Forecast
+                let actualValue = item.actual_value ? item.actual_value.toFixed(2) : '-';
+                let actualRow = `<tr>
+                    <td>${item.ds}</td>
+                    <td>${item.yhat.toFixed(2)}</td>
+                    <td>${actualValue}</td>
+                </tr>`;
+                comparisonTableBody.innerHTML += actualRow;
 
-        // Isi tabel forecast data
-        var forecastTableBody = document.getElementById('forecastTableBody');
-        forecastTableBody.innerHTML = ''; // Bersihkan isi tabel sebelumnya
-        for (var i = 0; i < data.dates.length; i++) {
-            var row = `<tr>
-                          <td>${data.dates[i]}</td>
-                          <td>${data.forecast[i]}</td>
-                          <td>${data.upper_ci[i]}</td>
-                          <td>${data.lower_ci[i]}</td>
-                       </tr>`;
-            forecastTableBody.innerHTML += row;
-        }
+                // Tambahkan data untuk grafik
+                labels.push(item.ds);
+                forecastValues.push(item.yhat);
+                upperValues.push(item.yhat_upper);
+                lowerValues.push(item.yhat_lower);
+                actualValues.push(item.actual_value);
+            });
 
-        // Isi tabel perbandingan actual vs forecast
-        var comparisonTableBody = document.getElementById('comparisonTableBody');
-        comparisonTableBody.innerHTML = ''; // Bersihkan isi tabel sebelumnya
-        for (var i = 0; i < data.dates.length; i++) {
-            var row = `<tr>
-                          <td>${data.dates[i]}</td>
-                          <td>${data.forecast[i]}</td>
-                          <td>${actual[i]}</td>
-                       </tr>`;
-            comparisonTableBody.innerHTML += row;
-        }
-    }
+            // Plot chart menggunakan Plotly.js
+            var trace1 = {
+                x: labels,
+                y: forecastValues,
+                mode: 'lines',
+                name: 'Forecast',
+                line: { color: 'blue' }
+            };
+
+            var trace2 = {
+                x: labels,
+                y: upperValues,
+                mode: 'lines',
+                name: 'Upper Bound',
+                line: { color: 'green', dash: 'dash' }
+            };
+
+            var trace3 = {
+                x: labels,
+                y: lowerValues,
+                mode: 'lines',
+                name: 'Lower Bound',
+                line: { color: 'red', dash: 'dash' }
+            };
+
+            var trace4 = {
+                x: labels,
+                y: actualValues,
+                mode: 'markers',
+                name: 'Actual',
+                marker: { color: 'black', size: 6 }
+            };
+
+            var layout = {
+                title: 'Energy Forecast vs Actual',
+                xaxis: { title: 'Date' },
+                yaxis: { title: 'Energy (GJ)' },
+                plot_bgcolor: "#f8f9fa"
+            };
+
+            Plotly.newPlot('forecastResult', [trace1, trace2, trace3, trace4], layout);
+        })
+        .catch(error => console.error("Error fetching forecast data:", error));
 });
 </script>
 

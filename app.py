@@ -1,15 +1,65 @@
-from flask import Flask, request, jsonify, render_template
-import pickle
+from flask import Flask, jsonify, render_template
 import pandas as pd
-import numpy as np
-import plotly.graph_objects as go
+import pickle
+import os
 
 app = Flask(__name__)
 
-# Muat model SARIMA menggunakan pickle
-model_path = 'models/sarima_model.pkl'
-with open(model_path, 'rb') as pkl:
-    sarima_model = pickle.load(pkl)
+# Tentukan path absolut ke file model dan data
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "models", "prophet_model.pkl")
+DATA_PATH = os.path.join(BASE_DIR, "data", "SARIMA_data.csv")
+
+# Muat model Prophet menggunakan pickle
+try:
+    with open(MODEL_PATH, "rb") as f:
+        model = pickle.load(f)
+except FileNotFoundError:
+    print(f"Error: Model tidak ditemukan di {MODEL_PATH}")
+    exit(1)
+
+# Fungsi untuk membuat prediksi
+def forecast_energy():
+    try:
+        # Buat data future
+        future = model.make_future_dataframe(periods=12, freq='M')
+        future["Overhaul"] = 0  # Default tidak ada event
+        future["Holidays"] = 0
+        future["Off"] = 0
+        
+        # Prediksi menggunakan model
+        forecast = model.predict(future)
+
+        # Periksa apakah file data historis ada
+        if not os.path.exists(DATA_PATH):
+            print(f"Warning: File {DATA_PATH} tidak ditemukan. Forecast hanya berisi prediksi.")
+            forecast["actual_value"] = None
+        else:
+            # Ambil data historis untuk perbandingan
+            df_actual = pd.read_csv(DATA_PATH)
+            df_actual.rename(columns={'Month': 'ds', 'Energy (GJ)': 'y'}, inplace=True)
+            df_actual["ds"] = pd.to_datetime(df_actual["ds"], format='%b-%y')
+            
+            # Gabungkan actual dan forecast berdasarkan tanggal (ds)
+            forecast = forecast[["ds", "yhat", "yhat_lower", "yhat_upper"]].merge(
+                df_actual[["ds", "y"]],
+                on="ds",
+                how="left"
+            ).rename(columns={"y": "actual_value"})
+
+        # Format tanggal agar bisa ditampilkan
+        forecast["ds"] = forecast["ds"].dt.strftime("%Y-%m-%d")
+
+        return forecast.to_dict(orient="records")
+
+    except Exception as e:
+        print(f"Error dalam proses forecasting: {e}")
+        return []
+
+@app.route('/api/forecast', methods=['GET'])
+def get_forecast():
+    forecast_data = forecast_energy()
+    return jsonify(forecast_data)
 
 @app.route('/')
 def home():
@@ -26,27 +76,6 @@ def forecast():
 @app.route('/about')
 def about():
     return render_template('about.html')
-
-@app.route('/predict', methods=['POST'])
-def predict():
-    data = request.get_json(force=True)
-    forecast_period = int(data.get('forecast_period', 12))
-    custom_exog = data.get('custom_exog', {'Overhaul': [0] * forecast_period, 'Holidays': [0] * forecast_period})
-    
-    exog_forecast = pd.DataFrame(custom_exog, index=pd.date_range(start='2025-01-01', periods=forecast_period, freq='M'))
-
-    predictions = sarima_model.get_forecast(steps=forecast_period, exog=exog_forecast)
-    pred_ci = predictions.conf_int()
-    pred_ci['forecast'] = predictions.predicted_mean
-
-    response = {
-        'dates': pred_ci.index.strftime('%Y-%m-%d').tolist(),
-        'forecast': pred_ci['forecast'].tolist(),
-        'lower_ci': pred_ci.iloc[:, 0].tolist(),
-        'upper_ci': pred_ci.iloc[:, 1].tolist()
-    }
-
-    return jsonify(response)
 
 if __name__ == '__main__':
     app.run(debug=True)
