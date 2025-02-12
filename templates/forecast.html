@@ -6,7 +6,7 @@
   <div class="col-12 mb-3">
     <div class="card">
       <div class="card-body">
-        <div id="forecastResult" style="width: 100%; height: 400px"></div>
+        <canvas id="forecastResult" style="width: 100%; height: 400px"></canvas>
       </div>
     </div>
   </div>
@@ -61,11 +61,19 @@
 
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
+  function formatDate(dateStr) {
+    const date = new Date(dateStr);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0"); // Bulan dimulai dari 0
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     fetch("/forecast_data")
       .then((response) => response.json())
       .then((data) => {
-        const labels = data.map((item) => item.ds);
+        const labels = data.map((item) => formatDate(item.ds));
         const forecastValues = data.map((item) => item.yhat);
         const upperValues = data.map((item) => item.yhat_upper);
         const lowerValues = data.map((item) => item.yhat_lower);
@@ -75,7 +83,7 @@
         data.forEach((item) => {
           const row = document.createElement("tr");
           row.innerHTML = `
-            <td>${item.ds}</td>
+            <td>${formatDate(item.ds)}</td>
             <td>${item.yhat.toFixed(2)}</td>
             <td>${item.yhat_upper.toFixed(2)}</td>
             <td>${item.yhat_lower.toFixed(2)}</td>
@@ -143,9 +151,9 @@
         data.forEach((item) => {
           const row = document.createElement("tr");
           row.innerHTML = `
-            <td>${item.ds}</td>
-            <td>${item.y}</td>
-            <td>${item.y}</td>
+            <td>${formatDate(item.ds)}</td>
+            <td>${item.y.toFixed(2)}</td>
+            <td>${item.y.toFixed(2)}</td>
           `;
           actualTableBody.appendChild(row);
         });
