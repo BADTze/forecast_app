@@ -1,16 +1,14 @@
-{% extends "base.html" %}
-
-{% block content %}
+{% extends "base.html" %} {% block content %}
 <h1>Forecasting</h1>
 <p>This is the Forecast page.</p>
 
 <div class="row">
   <div class="col-12 mb-3">
     <div class="card">
-        <div class="card-body">
-          <div id="forecastResult" style="width:100%; height:400px;"></div>
-        </div>
+      <div class="card-body">
+        <div id="forecastResult" style="width: 100%; height: 400px"></div>
       </div>
+    </div>
   </div>
 </div>
 
@@ -21,19 +19,19 @@
         <h5 class="card-title">Data Forecast</h5>
         <div class="table-responsive">
           <table class="table table-striped table-hover">
-              <thead class="thead-dark">
-                  <tr>
-                      <th scope="col">DATE</th>
-                      <th scope="col">Forecast Value</th>
-                      <th scope="col">Upper Value</th>
-                      <th scope="col">Lower Value</th>
-                  </tr>
-              </thead>
-              <tbody id="forecastTableBody">
-                  <!-- Data tabel akan diisi oleh JavaScript -->
-              </tbody>
+            <thead class="thead-dark">
+              <tr>
+                <th scope="col">DATE</th>
+                <th scope="col">Forecast Value</th>
+                <th scope="col">Upper Value</th>
+                <th scope="col">Lower Value</th>
+              </tr>
+            </thead>
+            <tbody id="forecastTableBody">
+              <!-- Data tabel akan diisi oleh JavaScript -->
+            </tbody>
           </table>
-      </div>
+        </div>
       </div>
     </div>
   </div>
@@ -44,113 +42,114 @@
         <h5 class="card-title">Actual v Forecast</h5>
         <div class="table-responsive">
           <table class="table table-striped table-hover">
-              <thead class="thead-dark">
-                  <tr>
-                      <th scope="col">DATE</th>
-                      <th scope="col">Forecast Value</th>
-                      <th scope="col">Actual Value</th>
-                  </tr>
-              </thead>
-              <tbody id="comparisonTableBody">
-                  <!-- Data tabel akan diisi oleh JavaScript -->
-              </tbody>
+            <thead class="thead-dark">
+              <tr>
+                <th scope="col">DATE</th>
+                <th scope="col">Forecast Value</th>
+                <th scope="col">Actual Value</th>
+              </tr>
+            </thead>
+            <tbody id="comparisonTableBody">
+              <!-- Data tabel akan diisi oleh JavaScript -->
+            </tbody>
           </table>
-      </div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    fetch("/api/forecast")  // Ambil data dari Flask API
-        .then(response => response.json())
-        .then(data => {
-            let forecastTableBody = document.getElementById("forecastTableBody");
-            let comparisonTableBody = document.getElementById("comparisonTableBody");
+  document.addEventListener("DOMContentLoaded", function () {
+    fetch("/forecast_data")
+      .then((response) => response.json())
+      .then((data) => {
+        const labels = data.map((item) => item.ds);
+        const forecastValues = data.map((item) => item.yhat);
+        const upperValues = data.map((item) => item.yhat_upper);
+        const lowerValues = data.map((item) => item.yhat_lower);
 
-            let labels = [];
-            let forecastValues = [];
-            let upperValues = [];
-            let lowerValues = [];
-            let actualValues = [];
+        // Update forecast table
+        const forecastTableBody = document.getElementById("forecastTableBody");
+        data.forEach((item) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${item.ds}</td>
+            <td>${item.yhat.toFixed(2)}</td>
+            <td>${item.yhat_upper.toFixed(2)}</td>
+            <td>${item.yhat_lower.toFixed(2)}</td>
+          `;
+          forecastTableBody.appendChild(row);
+        });
 
-            // Kosongkan tabel sebelum mengisi ulang
-            forecastTableBody.innerHTML = "";
-            comparisonTableBody.innerHTML = "";
+        // Plot forecast chart
+        const ctx = document.getElementById("forecastResult").getContext("2d");
+        new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: "Forecast Value",
+                data: forecastValues,
+                borderColor: "rgba(75, 192, 192, 1)",
+                borderWidth: 1,
+                fill: false,
+              },
+              {
+                label: "Upper Bound",
+                data: upperValues,
+                borderColor: "rgba(255, 99, 132, 1)",
+                borderWidth: 1,
+                fill: false,
+              },
+              {
+                label: "Lower Bound",
+                data: lowerValues,
+                borderColor: "rgba(54, 162, 235, 1)",
+                borderWidth: 1,
+                fill: false,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            scales: {
+              x: {
+                display: true,
+                title: {
+                  display: true,
+                  text: "Date",
+                },
+              },
+              y: {
+                display: true,
+                title: {
+                  display: true,
+                  text: "Energy (GJ)",
+                },
+              },
+            },
+          },
+        });
+      });
 
-            data.forEach(item => {
-                // Tambahkan ke tabel Forecast
-                let forecastRow = `<tr>
-                    <td>${item.ds}</td>
-                    <td>${item.yhat.toFixed(2)}</td>
-                    <td>${item.yhat_upper.toFixed(2)}</td>
-                    <td>${item.yhat_lower.toFixed(2)}</td>
-                </tr>`;
-                forecastTableBody.innerHTML += forecastRow;
-
-                // Tambahkan ke tabel Actual vs Forecast
-                let actualValue = item.actual_value ? item.actual_value.toFixed(2) : '-';
-                let actualRow = `<tr>
-                    <td>${item.ds}</td>
-                    <td>${item.yhat.toFixed(2)}</td>
-                    <td>${actualValue}</td>
-                </tr>`;
-                comparisonTableBody.innerHTML += actualRow;
-
-                // Tambahkan data untuk grafik
-                labels.push(item.ds);
-                forecastValues.push(item.yhat);
-                upperValues.push(item.yhat_upper);
-                lowerValues.push(item.yhat_lower);
-                actualValues.push(item.actual_value);
-            });
-
-            // Plot chart menggunakan Plotly.js
-            var trace1 = {
-                x: labels,
-                y: forecastValues,
-                mode: 'lines',
-                name: 'Forecast',
-                line: { color: 'blue' }
-            };
-
-            var trace2 = {
-                x: labels,
-                y: upperValues,
-                mode: 'lines',
-                name: 'Upper Bound',
-                line: { color: 'green', dash: 'dash' }
-            };
-
-            var trace3 = {
-                x: labels,
-                y: lowerValues,
-                mode: 'lines',
-                name: 'Lower Bound',
-                line: { color: 'red', dash: 'dash' }
-            };
-
-            var trace4 = {
-                x: labels,
-                y: actualValues,
-                mode: 'markers',
-                name: 'Actual',
-                marker: { color: 'black', size: 6 }
-            };
-
-            var layout = {
-                title: 'Energy Forecast vs Actual',
-                xaxis: { title: 'Date' },
-                yaxis: { title: 'Energy (GJ)' },
-                plot_bgcolor: "#f8f9fa"
-            };
-
-            Plotly.newPlot('forecastResult', [trace1, trace2, trace3, trace4], layout);
-        })
-        .catch(error => console.error("Error fetching forecast data:", error));
-});
+    // Fetch and update actual data
+    fetch("/actual_data")
+      .then((response) => response.json())
+      .then((data) => {
+        const actualTableBody = document.getElementById("comparisonTableBody");
+        data.forEach((item) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${item.ds}</td>
+            <td>${item.y}</td>
+            <td>${item.y}</td>
+          `;
+          actualTableBody.appendChild(row);
+        });
+      });
+  });
 </script>
 
 {% endblock %}

@@ -1,68 +1,50 @@
 from flask import Flask, jsonify, render_template
 import pandas as pd
 import pickle
-import os
 
 app = Flask(__name__)
 
-# Tentukan path absolut ke file model dan data
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "models", "prophet_model.pkl")
-DATA_PATH = os.path.join(BASE_DIR, "data", "SARIMA_data.csv")
+# Load model
+with open('models/prophet_model.pkl', 'rb') as f:
+    model = pickle.load(f)
 
-# Muat model Prophet menggunakan pickle
-try:
-    with open(MODEL_PATH, "rb") as f:
-        model = pickle.load(f)
-except FileNotFoundError:
-    print(f"Error: Model tidak ditemukan di {MODEL_PATH}")
-    exit(1)
+# Load data and prepare with correct columns
+df = pd.read_csv('data/forecast_data.csv')
+df['Month'] = pd.to_datetime(df['Month'])
+df = df.rename(columns={'Month': 'ds', 'Energy (GJ)': 'y'})
 
-# Fungsi untuk membuat prediksi
-def forecast_energy():
-    try:
-        # Buat data future
-        future = model.make_future_dataframe(periods=12, freq='M')
-        future["Overhaul"] = 0  # Default tidak ada event
-        future["Holidays"] = 0
-        future["Off"] = 0
-        
-        # Prediksi menggunakan model
-        forecast = model.predict(future)
+# Prepare regressors
+df['Overhaul'] = df['Remark'].apply(lambda x: 1 if x == 'OH' else 0)
+df['Holidays'] = df['Remark'].apply(lambda x: 1 if x in ['Lebaran', 'Natal'] else 0)
+df['Off'] = df['Remark'].apply(lambda x: 1 if x == 'OFF' else 0)
 
-        # Periksa apakah file data historis ada
-        if not os.path.exists(DATA_PATH):
-            print(f"Warning: File {DATA_PATH} tidak ditemukan. Forecast hanya berisi prediksi.")
-            forecast["actual_value"] = None
-        else:
-            # Ambil data historis untuk perbandingan
-            df_actual = pd.read_csv(DATA_PATH)
-            df_actual.rename(columns={'Month': 'ds', 'Energy (GJ)': 'y'}, inplace=True)
-            df_actual["ds"] = pd.to_datetime(df_actual["ds"], format='%b-%y')
+@app.route('/forecast')
+def forecast():
+    future = model.make_future_dataframe(periods=12, freq='MS')
+    future['Overhaul'] = 0
+    future['Holidays'] = 0
+    future['Off'] = 0
+    forecast = model.predict(future)
 
-            # Gabungkan actual dan forecast berdasarkan tanggal (ds)
-            forecast = forecast[["ds", "yhat", "yhat_lower", "yhat_upper"]].merge(
-                df_actual[["ds", "y"]],
-                on="ds",
-                how="left"
-            ).rename(columns={"y": "actual_value"})
+    forecast_data = forecast[['ds', 'yhat', 'yhat_upper', 'yhat_lower']].tail(12).to_dict(orient='records')
+    actual_data = df[['ds', 'y']].tail(12).to_dict(orient='records')
+    return render_template('forecast.html', forecast_data=forecast_data, actual_data=actual_data)
 
-        # Konversi NaN ke None agar valid dalam JSON
-        forecast = forecast.fillna(None)
+@app.route('/forecast_data')
+def forecast_data():
+    future = model.make_future_dataframe(periods=12, freq='MS')
+    future['Overhaul'] = 0
+    future['Holidays'] = 0
+    future['Off'] = 0
+    forecast = model.predict(future)
 
-        # Format tanggal agar bisa ditampilkan
-        forecast["ds"] = forecast["ds"].dt.strftime("%Y-%m-%d")
-
-        return forecast.to_dict(orient="records")
-
-    except Exception as e:
-        print(f"Error dalam proses forecasting: {e}")
-        return []
-
-@app.route('/api/forecast', methods=['GET'])
-def get_forecast():
-    forecast_data = forecast_energy()
+    forecast_data = forecast[['ds', 'yhat', 'yhat_upper', 'yhat_lower']].tail(12).to_dict(orient='records')
     return jsonify(forecast_data)
+
+@app.route('/actual_data')
+def actual_data():
+    actual_data = df[['ds', 'y']].tail(12).to_dict(orient='records')
+    return jsonify(actual_data)
 
 @app.route('/')
 def home():
@@ -71,10 +53,6 @@ def home():
 @app.route('/data')
 def data():
     return render_template('data.html')
-
-@app.route('/forecast')
-def forecast():
-    return render_template('forecast.html')
 
 @app.route('/about')
 def about():
