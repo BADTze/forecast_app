@@ -8,15 +8,20 @@ app = Flask(__name__)
 with open('models/prophet_model.pkl', 'rb') as f:
     model = pickle.load(f)
 
-# Load data and prepare with correct columns
 df = pd.read_csv('data/forecast_data.csv')
-df['Month'] = pd.to_datetime(df['Month'])
+
+# Konversi format 'MMM-YY' ke datetime
+df['Month'] = pd.to_datetime(df['Month'], format='%b-%y', errors='coerce')
+# Hapus nilai yang tidak valid
+df = df.dropna(subset=['Month'])
+# Ubah nama kolom agar sesuai dengan model Prophet
 df = df.rename(columns={'Month': 'ds', 'Energy (GJ)': 'y'})
 
 # Prepare regressors
 df['Overhaul'] = df['Remark'].apply(lambda x: 1 if x == 'OH' else 0)
 df['Holidays'] = df['Remark'].apply(lambda x: 1 if x in ['Lebaran', 'Natal'] else 0)
 df['Off'] = df['Remark'].apply(lambda x: 1 if x == 'OFF' else 0)
+
 
 @app.route('/forecast')
 def forecast():
