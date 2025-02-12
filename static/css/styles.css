@@ -112,3 +112,19 @@ body {
   height: 100%;
   overflow: hidden;
 }
+
+.list-group-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+}
+
+.list-group-item label {
+  font-weight: bold;
+}
+
+.list-group-item span {
+  font-size: 14px;
+}
