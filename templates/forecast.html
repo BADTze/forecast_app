@@ -1,17 +1,22 @@
-{% extends "base.html" %} {% block content %}
+{% extends "base.html" %} 
+
+{% block content %}
 <h1>Forecasting</h1>
 <p>This is the Forecast page.</p>
 
+<!-- Plotly Chart -->
 <div class="row">
   <div class="col-12 mb-3">
-    <div class="card">
+    <div class="card bg-dark">
       <div class="card-body">
-        <canvas id="forecastResult" style="width: 100%; height: 400px"></canvas>
+        <h5 class="card-title text-white">Forecast vs Actual Data</h5>
+        <div id="forecastPlot"></div> 
       </div>
     </div>
   </div>
 </div>
 
+<!-- Forecast Data Table -->
 <div class="row">
   <div class="col-sm-6">
     <div class="card text-white bg-dark mb-3">
@@ -27,19 +32,18 @@
                 <th scope="col">Lower Value</th>
               </tr>
             </thead>
-            <tbody id="forecastTableBody">
-              <!-- Data tabel akan diisi oleh JavaScript -->
-            </tbody>
+            <tbody id="forecastTableBody"></tbody>
           </table>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Actual vs Forecast Table -->
   <div class="col-sm-6">
     <div class="card text-white bg-dark mb-3">
       <div class="card-body">
-        <h5 class="card-title">Actual v Forecast</h5>
+        <h5 class="card-title">Actual vs Forecast</h5>
         <div class="table-responsive">
           <table class="table table-striped table-hover">
             <thead class="thead-dark">
@@ -49,9 +53,7 @@
                 <th scope="col">Actual Value</th>
               </tr>
             </thead>
-            <tbody id="comparisonTableBody">
-              <!-- Data tabel akan diisi oleh JavaScript -->
-            </tbody>
+            <tbody id="comparisonTableBody"></tbody>
           </table>
         </div>
       </div>
@@ -59,106 +61,8 @@
   </div>
 </div>
 
+<!-- Load Plotly & Scripts -->
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-<script>
-  function formatDate(dateStr) {
-    const date = new Date(dateStr);
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0"); // Bulan dimulai dari 0
-    const year = date.getFullYear();
-    return `${day}-${month}-${year}`;
-  }
-
-  document.addEventListener("DOMContentLoaded", function () {
-    fetch("/forecast_data")
-      .then((response) => response.json())
-      .then((data) => {
-        const labels = data.map((item) => formatDate(item.ds));
-        const forecastValues = data.map((item) => item.yhat);
-        const upperValues = data.map((item) => item.yhat_upper);
-        const lowerValues = data.map((item) => item.yhat_lower);
-
-        // Update forecast table
-        const forecastTableBody = document.getElementById("forecastTableBody");
-        data.forEach((item) => {
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td>${formatDate(item.ds)}</td>
-            <td>${item.yhat.toFixed(2)}</td>
-            <td>${item.yhat_upper.toFixed(2)}</td>
-            <td>${item.yhat_lower.toFixed(2)}</td>
-          `;
-          forecastTableBody.appendChild(row);
-        });
-
-        // Plot forecast chart
-        const ctx = document.getElementById("forecastResult").getContext("2d");
-        new Chart(ctx, {
-          type: "line",
-          data: {
-            labels: labels,
-            datasets: [
-              {
-                label: "Forecast Value",
-                data: forecastValues,
-                borderColor: "rgba(75, 192, 192, 1)",
-                borderWidth: 1,
-                fill: false,
-              },
-              {
-                label: "Upper Bound",
-                data: upperValues,
-                borderColor: "rgba(255, 99, 132, 1)",
-                borderWidth: 1,
-                fill: false,
-              },
-              {
-                label: "Lower Bound",
-                data: lowerValues,
-                borderColor: "rgba(54, 162, 235, 1)",
-                borderWidth: 1,
-                fill: false,
-              },
-            ],
-          },
-          options: {
-            responsive: true,
-            scales: {
-              x: {
-                display: true,
-                title: {
-                  display: true,
-                  text: "Date",
-                },
-              },
-              y: {
-                display: true,
-                title: {
-                  display: true,
-                  text: "Energy (GJ)",
-                },
-              },
-            },
-          },
-        });
-      });
-
-    // Fetch and update actual data
-    fetch("/actual_data")
-      .then((response) => response.json())
-      .then((data) => {
-        const actualTableBody = document.getElementById("comparisonTableBody");
-        data.forEach((item) => {
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td>${formatDate(item.ds)}</td>
-            <td>${item.y.toFixed(2)}</td>
-            <td>${item.y.toFixed(2)}</td>
-          `;
-          actualTableBody.appendChild(row);
-        });
-      });
-  });
-</script>
+<script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
 
 {% endblock %}
