@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, redirect, url_for
 import pandas as pd
 import pickle
 import numpy as np
@@ -34,10 +34,9 @@ mae = mean_absolute_error(merged_df['y'], merged_df['yhat'])
 rmse = np.sqrt(mean_squared_error(merged_df['y'], merged_df['yhat']))
 mape = np.mean(np.abs((merged_df['y'] - merged_df['yhat']) / merged_df['y'])) * 100
 
-# ROUTES
 @app.route('/')
 def home_page():
-    return render_template('base.html')
+    return redirect(url_for('forecast_page'))
 
 @app.route('/forecast')
 def forecast_page():
@@ -83,5 +82,11 @@ def get_summary_actual():
     }
     return jsonify(summary_actual)
 
-if __name__ == '__main__':
+@app.route('/forecast_data')
+def get_forecast_data():
+    forecast_data = forecast[['ds', 'yhat', 'yhat_upper', 'yhat_lower']].copy()
+    forecast_data['actual'] = df['y']
+    return jsonify(forecast_data.to_dict(orient='records'))
+
+if __name__ == "__main__":
     app.run(debug=True)
