@@ -50,7 +50,8 @@ document.addEventListener("DOMContentLoaded", function () {
             y: forecastValues,
             mode: "lines+markers",
             name: "Forecast",
-            line: { color: "red", dash: "dash" },
+            line: { color: "red"},
+            marker: { color: "red", symbol: "circle" }
           },
           {
             x: labels,
@@ -58,29 +59,47 @@ document.addEventListener("DOMContentLoaded", function () {
             mode: "lines+markers",
             name: "Actual",
             line: { color: "blue" },
+            marker: { color: "blue", symbol: "square" }
           },
           {
             x: labels,
             y: upperValues,
             mode: "lines",
             name: "Upper Bound",
-            line: { color: "gray", dash: "dot" },
+            line: { color: "orange", dash: "dot" }
           },
           {
             x: labels,
             y: lowerValues,
             mode: "lines",
             name: "Lower Bound",
-            line: { color: "gray", dash: "dot" },
+            line: { color: "orange", dash: "dot" }
           },
         ];
   
-        Plotly.newPlot("forecastPlot", plotData, {
-          title: "Forecast vs Actual Data",
-          xaxis: { title: "Date" },
-          yaxis: { title: "Energy (GJ)" },
-          template: "plotly_dark",
-        });
+        const layout = {
+          title: {
+            text: "Energy Forecast using Prophet",
+            font: { size: 24, color: "#000000" },
+            xanchor: "center",
+            yanchor: "top"
+          },
+          xaxis: {
+            title: { text: "Date", font: { size: 18, color: "#000000" } },
+            tickangle: -45,
+            tickfont: { size: 12, color: "#000000" }
+          },
+          yaxis: {
+            title: { text: "Energy (GJ)", font: { size: 18, color: "#000000" } },
+            tickfont: { size: 12, color: "#000000" }
+          },
+          plot_bgcolor: "#ffffff",
+          paper_bgcolor: "#f0f0f0",
+          margin: { l: 60, r: 30, t: 70, b: 100 },
+          template: "plotly_white"
+        };
+  
+        Plotly.newPlot("forecastPlot", plotData, layout);
       }
     });
   });
