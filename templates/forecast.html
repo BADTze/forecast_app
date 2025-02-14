@@ -1,7 +1,6 @@
-{% extends "base.html" %} 
-
+{% extends "base.html" %}
 {% block content %}
-<h1>Forecasting</h1>
+<h1>Forecast Page</h1>
 <p>This is the Forecast page.</p>
 
 <!-- Plotly Chart -->
@@ -39,7 +38,6 @@
     </div>
   </div>
 
-  <!-- Actual vs Forecast Table -->
   <div class="col-sm-6">
     <div class="card text-white bg-dark mb-3">
       <div class="card-body">
@@ -61,8 +59,8 @@
   </div>
 </div>
 
-<!-- Load Plotly & Scripts -->
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/forecast.js') }}"></script>
 
 {% endblock %}

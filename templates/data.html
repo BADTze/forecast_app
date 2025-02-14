@@ -1,4 +1,5 @@
-{% extends "base.html" %} {% block content %}
+{% extends "base.html" %} 
+{% block content %}
 <h1>Data Page</h1>
 <p>This is the Data page.</p>
 
@@ -41,7 +42,7 @@
     <div class="card bg-dark mb-3">
       <div class="card-body">
         <h5 class="card-title text-white">Summary Forecast Data</h5>
-        <ul class="list-group text-dark" id="summaryForecastData">
+        <ul class="list-group text-dark" id="summary_Forecast">
           <li class="list-group-item d-flex justify-content-between">
             <span>Minimum:</span> <span id="forecastMin"></span>
           </li>
@@ -60,7 +61,7 @@
     <div class="card bg-dark mb-3">
       <div class="card-body">
         <h5 class="card-title text-white">Summary Actual Data</h5>
-        <ul class="list-group text-dark" id="summaryActualData">
+        <ul class="list-group text-dark" id="summary_Actual">
           <li class="list-group-item d-flex justify-content-between">
             <span>Minimum:</span> <span id="actualMin"></span>
           </li>
@@ -77,5 +78,6 @@
 </div>
 
 <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/data.js') }}"></script>
 
 {% endblock %}
