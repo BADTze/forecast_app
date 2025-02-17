@@ -3,12 +3,26 @@
 <h1>Forecast Page</h1>
 <p>This is the Forecast page.</p>
 
+<!-- Form Input untuk Periode Forecast -->
+<div class="row mb-3">
+  <div class="col-12">
+    <div class="card bg-dark text-white">
+      <div class="card-body">
+        <form id="forecastForm">
+          <label for="periods">Masukkan Periode Forecast (bulan):</label>
+          <input type="number" id="periods" name="periods" min="1" value="12" class="form-control w-25 d-inline">
+          <button type="submit" class="btn btn-primary">Generate Forecast</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Plotly Chart -->
 <div class="row">
   <div class="col-12 mb-3">
     <div class="card bg-dark">
       <div class="card-body">
-        <!-- <h5 class="card-title text-white">Forecast vs Actual Data</h5> -->
         <div id="forecastPlot" style="width: 100%; height: 400px;"></div> 
       </div>
     </div>

@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template, redirect, url_for
+from flask import Flask, request, jsonify, render_template, redirect, url_for
 import pandas as pd
 import pickle
 import numpy as np
@@ -87,6 +87,32 @@ def get_forecast_data():
     forecast_data = forecast[['ds', 'yhat', 'yhat_upper', 'yhat_lower']].copy()
     forecast_data['actual'] = df['y']
     return jsonify(forecast_data.to_dict(orient='records'))
+
+@app.route('/dynamic_forecast')
+def dynamic_forecast():
+    periods = request.args.get('periods', default=12, type=int)
+
+    # Forecast future dates
+    future = model.make_future_dataframe(periods=periods, freq='M')
+
+    # Add regressors if needed
+    for reg in ['Overhaul', 'Holidays', 'Off']:
+        if reg in df.columns:
+            future[reg] = 0  
+
+    # Predict future data
+    forecast = model.predict(future)
+
+    # Merge with actual data
+    merged_data = forecast[['ds', 'yhat', 'yhat_upper', 'yhat_lower']]
+    merged_data = merged_data.merge(df[['ds', 'y']], on='ds', how='left')
+    merged_data['actual'] = merged_data['y'].where(merged_data['ds'] <= '2024-12-31', None)
+    merged_data.drop(columns=['y'], inplace=True)
+
+    # Convert NaN in actual to "-"
+    merged_data['actual'].fillna("-", inplace=True)
+
+    return jsonify(merged_data.to_dict(orient='records'))
 
 if __name__ == "__main__":
     app.run(debug=True)
