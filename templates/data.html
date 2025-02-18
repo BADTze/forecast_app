@@ -9,15 +9,11 @@
       <div class="card-body">
         <h5 class="card-title">Table Data Actual</h5>
         <div class="table-responsive">
-          <table class="table table-striped table-hover">
+          <table id="actualDataTable" class="table table-striped table-hover">
             <thead class="thead-dark">
-              <tr>
-                <th scope="col">DATE</th>
-                <th scope="col">Actual Value</th>
-              </tr>
+              <tr></tr> 
             </thead>
             <tbody id="actualDataTableBody">
-              <!-- Data tabel akan diisi oleh JavaScript -->
             </tbody>
           </table>
         </div>
@@ -32,7 +28,6 @@
       <div class="card-body">
         <h5 class="card-title">Model Evaluation</h5>
         <ul id="modelEvaluation">
-          <!-- Data evaluasi model akan diisi oleh JavaScript -->
         </ul>
       </div>
     </div>
@@ -72,6 +67,29 @@
             <span>Average:</span> <span id="actualAvg"></span>
           </li>
         </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-12 mb-3">
+    <div class="card text-white bg-dark mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Annual Growth Table</h5>
+        <div class="table-responsive">
+          <table id="growthTable" class="table table-striped table-hover">
+            <thead class="thead-dark">
+              <tr>
+                <th scope="col">Year</th>
+                <th scope="col">Energy (GJ)</th>
+                <th scope="col">Growth (%)</th>
+              </tr>
+            </thead>
+            <tbody id="growthTableBody">
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>

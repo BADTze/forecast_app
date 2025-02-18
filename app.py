@@ -50,6 +50,15 @@ def data_page():
 def about_page():
     return render_template('about.html')
 
+@app.route('/raw_data')
+def get_raw_data():
+    df = pd.read_csv("data/forecast_data.csv", usecols=["Month", "Energy (GJ)", "Remark"])
+    # Mengganti NaN dengan None agar JSON valid
+    df = df.where(pd.notna(df), None)
+
+    raw_data = df.to_dict(orient="records") 
+    return jsonify(raw_data)
+
 @app.route('/actual_data')
 def get_actual_data():
     actual_data = merged_df[['ds', 'y']].to_dict(orient='records')
@@ -113,6 +122,20 @@ def dynamic_forecast():
     merged_data['actual'].fillna("-", inplace=True)
 
     return jsonify(merged_data.to_dict(orient='records'))
+
+@app.route('/growth_data')
+def get_growth_data():
+    df = pd.read_csv("data/forecast_data.csv")
+    df.rename(columns={"Month": "Date", "Energy (GJ)": "Energy"}, inplace=True)
+
+    df["Date"] = pd.to_datetime(df["Date"], format="%b-%y")
+    df["Year"] = df["Date"].dt.year
+    yearly_data = df.groupby("Year")["Energy"].sum().reset_index()
+
+    yearly_data["Growth (%)"] = yearly_data["Energy"].pct_change() * 100
+    yearly_data["Growth (%)"] = yearly_data["Growth (%)"].fillna("-")
+
+    return jsonify(yearly_data.to_dict(orient="records"))
 
 if __name__ == "__main__":
     app.run(debug=True)
