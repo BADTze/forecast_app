@@ -1,230 +1,123 @@
-// forecast.js
-// document.addEventListener("DOMContentLoaded", function () {
-//   fetchData("/forecast_data", (data) => {
-//     function formatDate(dateStr) {
-//       const date = new Date(dateStr);
-//       return `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
-//     }
-
-//     const labels = data.map((item) => formatDate(item.ds));
-//     const forecastValues = data.map((item) => item.yhat);
-//     const upperValues = data.map((item) => item.yhat_upper);
-//     const lowerValues = data.map((item) => item.yhat_lower);
-//     const actualValues = data.map((item) => item.actual || null);
-
-// // Populate Forecast Table
-// const forecastTableBody = safeQuerySelector("forecastTableBody");
-// if (forecastTableBody) {
-//   forecastTableBody.innerHTML = "";
-//   data.forEach((item) => {
-//     let row = document.createElement("tr");
-//     row.innerHTML = `<td>${formatDate(item.ds)}</td>
-//                       <td>${item.yhat.toFixed(2)}</td>
-//                       <td>${item.yhat_upper.toFixed(2)}</td>
-//                       <td>${item.yhat_lower.toFixed(2)}</td>`;
-//     forecastTableBody.appendChild(row);
-//   });
-// }
-
-// // Populate Actual vs Forecast Table
-// const comparisonTableBody = safeQuerySelector("comparisonTableBody");
-// if (comparisonTableBody) {
-//   comparisonTableBody.innerHTML = "";
-//   data.forEach((item) => {
-//     if (item.actual !== null) {
-//       let row = document.createElement("tr");
-//       row.innerHTML = `<td>${formatDate(item.ds)}</td>
-//                         <td>${item.yhat.toFixed(2)}</td>
-//                         <td>${item.actual.toFixed(2)}</td>`;
-//       comparisonTableBody.appendChild(row);
-//     }
-//   });
-// }
-
-//     // Render Plotly Chart
-//     const forecastPlot = safeQuerySelector("forecastPlot");
-//     if (forecastPlot) {
-//       const plotData = [
-//         {
-//           x: labels,
-//           y: forecastValues,
-//           mode: "lines+markers",
-//           name: "Forecast",
-//           line: { color: "red" },
-//           marker: { color: "red", symbol: "circle" },
-//         },
-//         {
-//           x: labels,
-//           y: actualValues,
-//           mode: "lines+markers",
-//           name: "Actual",
-//           line: { color: "blue" },
-//           marker: { color: "blue", symbol: "square" },
-//         },
-//         {
-//           x: labels,
-//           y: upperValues,
-//           mode: "lines",
-//           name: "Upper Bound",
-//           line: { color: "orange", dash: "dot" },
-//         },
-//         {
-//           x: labels,
-//           y: lowerValues,
-//           mode: "lines",
-//           name: "Lower Bound",
-//           line: { color: "orange", dash: "dot" },
-//         },
-//       ];
-
-//       const layout = {
-//         title: {
-//           text: "Energy Forecast using Prophet",
-//           font: { size: 24, color: "#000000" },
-//           xanchor: "center",
-//           yanchor: "top",
-//         },
-//         xaxis: {
-//           title: { text: "Date", font: { size: 18, color: "#000000" } },
-//           tickangle: -45,
-//           tickfont: { size: 12, color: "#000000" },
-//         },
-//         yaxis: {
-//           title: { text: "Energy (GJ)", font: { size: 18, color: "#000000" } },
-//           tickfont: { size: 12, color: "#000000" },
-//         },
-//         plot_bgcolor: "#ffffff",
-//         paper_bgcolor: "#f0f0f0",
-//         margin: { l: 60, r: 30, t: 70, b: 100 },
-//         template: "plotly_white",
-//       };
-
-//       Plotly.newPlot("forecastPlot", plotData, layout);
-//     }
-//   });
-// });
-
 document.addEventListener("DOMContentLoaded", function () {
   function fetchForecast(periods) {
-      fetch(`/dynamic_forecast?periods=${periods}`)
-          .then(response => response.json())
-          .then(data => {
-              updateUI(data);
-          })
-          .catch(error => console.error("Error fetching forecast:", error));
+    fetch(`/dynamic_forecast?periods=${periods}`)
+      .then((response) => response.json())
+      .then((data) => {
+        updateUI(data);
+      })
+      .catch((error) => console.error("Error fetching forecast:", error));
   }
 
   function updateUI(data) {
-      function formatDate(dateStr) {
-          const date = new Date(dateStr);
-          return `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
-      }
+    function formatDate(dateStr) {
+      const date = new Date(dateStr);
+      return `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
+    }
 
-      // Extract data for plotting and tables
-      const labels = data.map((item) => formatDate(item.ds));
-      const forecastValues = data.map((item) => item.yhat);
-      const upperValues = data.map((item) => item.yhat_upper);
-      const lowerValues = data.map((item) => item.yhat_lower);
-      const actualValues = data.map((item) => item.actual !== "-" ? item.actual : null);
+    // Extract data for plotting and tables
+    const labels = data.map((item) => formatDate(item.ds));
+    const forecastValues = data.map((item) => item.yhat.toFixed(2));
+    const upperValues = data.map((item) => item.yhat_upper.toFixed(2));
+    const lowerValues = data.map((item) => item.yhat_lower.toFixed(2));
+    const actualValues = data.map((item) => item.actual !== "-" ? item.actual.toFixed(2) : null);
 
-      // **Populate Forecast Table**
-      const forecastTableBody = safeQuerySelector("forecastTableBody");
-      if (forecastTableBody) {
-          forecastTableBody.innerHTML = "";
-          data.forEach((item) => {
-              let row = document.createElement("tr");
-              row.innerHTML = `<td>${formatDate(item.ds)}</td>
-                              <td>${item.yhat.toFixed(2)}</td>
-                              <td>${item.yhat_upper.toFixed(2)}</td>
-                              <td>${item.yhat_lower.toFixed(2)}</td>`;
-              forecastTableBody.appendChild(row);
-          });
-      }
+    // **Populate Forecast Table**
+    const forecastTableBody = document.getElementById("forecastTableBody");
+    if (forecastTableBody) {
+      forecastTableBody.innerHTML = "";
+      data.forEach((item) => {
+        let row = document.createElement("tr");
+        row.innerHTML = `<td>${formatDate(item.ds)}</td>
+                                <td>${item.yhat.toFixed(2)}</td>
+                                <td>${item.yhat_upper.toFixed(2)}</td>
+                                <td>${item.yhat_lower.toFixed(2)}</td>`;
+        forecastTableBody.appendChild(row);
+      });
+    }
 
-      // **Populate Actual vs Forecast Table**
-      const comparisonTableBody = safeQuerySelector("comparisonTableBody");
-      if (comparisonTableBody) {
-          comparisonTableBody.innerHTML = "";
-          data.forEach((item) => {
-              let actualValue = item.actual !== "-" ? item.actual.toFixed(2) : "-";
-              let row = document.createElement("tr");
-              row.innerHTML = `<td>${formatDate(item.ds)}</td>
-                              <td>${item.yhat.toFixed(2)}</td>
-                              <td>${actualValue}</td>`;
-              comparisonTableBody.appendChild(row);
-          });
-      }
+    // **Populate Actual vs Forecast Table**
+    const comparisonTableBody = document.getElementById("comparisonTableBody");
+    if (comparisonTableBody) {
+      comparisonTableBody.innerHTML = "";
+      data.forEach((item) => {
+        let actualValue = item.actual !== "-" ? item.actual.toFixed(2) : "-";
+        let row = document.createElement("tr");
+        row.innerHTML = `<td>${formatDate(item.ds)}</td>
+                                <td>${item.yhat.toFixed(2)}</td>
+                                <td>${actualValue}</td>`;
+        comparisonTableBody.appendChild(row);
+      });
+    }
 
-      // **Render Plotly Chart**
-      const forecastPlot = safeQuerySelector("forecastPlot");
-      if (forecastPlot) {
-          const plotData = [
-              {
-                  x: labels,
-                  y: forecastValues,
-                  mode: "lines+markers",
-                  name: "Forecast",
-                  line: { color: "red" },
-                  marker: { color: "red", symbol: "circle" }
-              },
-              {
-                  x: labels,
-                  y: actualValues,
-                  mode: "lines+markers",
-                  name: "Actual",
-                  line: { color: "blue" },
-                  marker: { color: "blue", symbol: "square" }
-              },
-              {
-                  x: labels,
-                  y: upperValues,
-                  mode: "lines",
-                  name: "Upper Bound",
-                  line: { color: "orange", dash: "dot" }
-              },
-              {
-                  x: labels,
-                  y: lowerValues,
-                  mode: "lines",
-                  name: "Lower Bound",
-                  line: { color: "orange", dash: "dot" }
-              }
-          ];
-
-          const layout = {
-              title: {
-                  text: "Energy Forecast vs Actual",
-                  font: { size: 24, color: "#000000" },
-                  xanchor: "center",
-                  yanchor: "top"
-              },
-              xaxis: {
-                  title: { text: "Date", font: { size: 18, color: "#000000" } },
-                  tickangle: -45,
-                  tickfont: { size: 12, color: "#000000" }
-              },
-              yaxis: {
-                  title: { text: "Energy (GJ)", font: { size: 18, color: "#000000" } },
-                  tickfont: { size: 12, color: "#000000" }
-              },
-              plot_bgcolor: "#ffffff",
-              paper_bgcolor: "#f0f0f0",
-              margin: { l: 60, r: 30, t: 70, b: 100 },
-              template: "plotly_white"
-          };
-
-          Plotly.newPlot("forecastPlot", plotData, layout);
-      }
+    // **Render ECharts Chart**
+    const forecastPlot = document.getElementById("forecastPlot");
+    if (forecastPlot) {
+      let chart = echarts.init(forecastPlot);
+      let option = {
+        title: {
+          text: "Energy Forecast vs Actual",
+          left: "center",
+          textStyle: { color: "#f4f4f4", fontSize: 20 },
+        },
+        tooltip: { trigger: "axis" },
+        legend: {
+          data: ["Forecast", "Actual", "Upper Bound", "Lower Bound"],
+          top: 30,
+          textStyle: { color: "#f4f4f4" },
+        },
+        xAxis: {
+          type: "category",
+          data: labels,
+          axisLabel: { rotate: -45, color: "#f4f4f4" },
+        },
+        yAxis: {
+          type: "value",
+          axisLabel: { color: "#f4f4f4" },
+        },
+        series: [
+          {
+            name: "Forecast",
+            type: "line",
+            data: forecastValues,
+            color: "#ff4d4d",
+            smooth: true,
+          },
+          {
+            name: "Actual",
+            type: "line",
+            data: actualValues,
+            color: "#4d79ff",
+            smooth: true,
+          },
+          {
+            name: "Upper Bound",
+            type: "line",
+            data: upperValues,
+            color: "#ffcc00",
+            // lineStyle: { type: "dashed" },
+          },
+          {
+            name: "Lower Bound",
+            type: "line",
+            data: lowerValues,
+            color: "#ffcc00",
+            // lineStyle: { type: "dashed" },
+          },
+        ],
+      };
+      chart.setOption(option);
+    }
   }
 
   // Event Listener untuk submit periode forecast
-  document.getElementById("forecastForm").addEventListener("submit", function (event) {
+  document
+    .getElementById("forecastForm")
+    .addEventListener("submit", function (event) {
       event.preventDefault();
       let periods = document.getElementById("periods").value;
       fetchForecast(periods);
-  });
+    });
 
   // Fetch default (12 bulan)
   fetchForecast(12);
 });
-

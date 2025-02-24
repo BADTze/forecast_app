@@ -1,5 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Anek+Malayalam:wght@400;500;600;700&display=swap');
+
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Anek Malayalam', sans-serif;
   margin: 0;
   padding: 0;
   display: flex;
@@ -7,7 +9,7 @@ body {
 }
 
 .container-fluid {
-  height: 100vh; /* Full viewport height */
+  height: 100vh; 
   display: flex;
   flex-direction: column;
 }
@@ -23,7 +25,7 @@ body {
   color: white;
   padding: 20px;
   height: 100%;
-  min-height: 100%; /* Ensure full height */
+  min-height: 100%; 
 }
 
 .sidebar h1 {
@@ -58,7 +60,7 @@ body {
   padding: 20px;
   background-color: #f8f9fa;
   flex-grow: 1;
-  overflow: auto; /* Ensure content is scrollable */
+  overflow: auto; 
   height: 100vh;
 }
 
@@ -67,45 +69,87 @@ body {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
+  font-family: 'Anek Malayalam', sans-serif;
 }
 
 .table-responsive {
-  max-height: 400px; /* Set the desired height */
+  max-height: 400px;
   overflow-y: auto;
+  border-radius: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
 }
 
-.table th,
-.table td {
-  white-space: nowrap;
-  padding: 8px;
-  border-top: 1px solid #454d55; /* Warna garis tepi */
+.table-responsive::-webkit-scrollbar {
+  width: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
 }
 
 .table thead {
   position: sticky;
   top: 0;
-  z-index: 10; /* Pastikan header tetap di atas */
-  background-color: #343a40; /* Warna latar belakang header */
-  color: white; /* Warna teks header */
+  z-index: 10;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-.table-striped tbody tr:nth-of-type(odd) {
-  background-color: #2c2f33;
+.thead-gold {
+  background-color: #ffd682;
+  color: #121212;
+  border-top: none;
 }
 
-.table-striped tbody tr:nth-of-type(even) {
-  background-color: #343a40;
+.thead-green {
+  background-color: #52736e;
+  color: #f4f4f4;
+  border-top: none;
+}
+
+.table thead th {
+  border-top: none !important;
+}
+
+.table th,
+.table td {
+  white-space: nowrap;
+  padding: 10px;
+}
+
+/* Table with gold card */
+.card[style*="background-color: #ffd682"] .table tbody {
+  background-color: #ffd682; 
+}
+
+.card[style*="background-color: #ffd682"] .table th,
+.card[style*="background-color: #ffd682"] .table td {
+  border-top: 1px solid #121212;
+  border-bottom: 1px solid #121212;
+}
+
+/* Table with green card */
+.card[style*="background-color: #52736E"] .table tbody {
+  background-color: #52736e; /* Match card background */
+}
+
+.card[style*="background-color: #52736E"] .table th,
+.card[style*="background-color: #52736E"] .table td {
+  border-top: 1px solid #f4f4f4;
+  border-bottom: 1px solid #f4f4f4;
 }
 
 .table-hover tbody tr:hover {
-  background-color: #495057;
+  background-color: rgba(255, 255, 255, 0.2); /* Hover effect */
 }
 
 /* Style for card */
 .card {
   height: 100%;
   overflow: hidden;
-  margin-bottom: 20px; /* Beri jarak bawah untuk setiap card */
+  margin-bottom: 20px;
+  border-radius: 8px;
 }
 
 .card-body {
