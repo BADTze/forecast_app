@@ -94,14 +94,12 @@ document.addEventListener("DOMContentLoaded", function () {
             type: "line",
             data: upperValues,
             color: "#ffcc00",
-            // lineStyle: { type: "dashed" },
           },
           {
             name: "Lower Bound",
             type: "line",
             data: lowerValues,
             color: "#ffcc00",
-            // lineStyle: { type: "dashed" },
           },
         ],
       };

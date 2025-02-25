@@ -1,16 +1,5 @@
 // data.js
 document.addEventListener("DOMContentLoaded", function () {
-  // fetchData("/actual_data", (data) => {
-  //   let actualTable = document.getElementById("actualDataTableBody");
-  //   actualTable.innerHTML = "";
-  //   data.forEach((item) => {
-  //     let row = document.createElement("tr");
-  //     row.innerHTML = `<td>${new Date(item.ds).toLocaleDateString()}</td>
-  //                      <td>${item.y.toFixed(2)}</td>`;
-  //     actualTable.appendChild(row);
-  //   });
-  // });
-
   fetchData("/raw_data", (data) => {
     let tableBody = document.getElementById("actualDataTableBody");
     let tableHead = document.querySelector("#actualDataTable thead tr");
@@ -18,7 +7,6 @@ document.addEventListener("DOMContentLoaded", function () {
     if (data.length > 0) {
         tableHead.innerHTML = "";
 
-        // Ambil urutan header langsung dari CSV agar tidak berubah
         let headers = ["Month", "Energy (GJ)", "Remark"]; 
 
         headers.forEach((key) => {

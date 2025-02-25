@@ -149,12 +149,17 @@ body {
   height: 100%;
   overflow: hidden;
   margin-bottom: 20px;
-  border-radius: 8px;
+  border-radius: 100px; 
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background-clip: padding-box; 
+  font-family: 'Anek Malayalam', sans-serif;
 }
 
 .card-body {
   height: 100%;
   overflow: hidden;
+  border-radius: inherit;
+  background-clip: padding-box;  
 }
 
 .list-group-item {
