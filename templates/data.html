@@ -1,95 +1,149 @@
-{% extends "base.html" %} 
-{% block content %}
+{% extends "base.html" %} {% block content %}
 <h1>Data Page</h1>
 <p>This is the Data page.</p>
 
-<div class="row">
-  <div class="col-12 mb-3">
-    <div class="card text-white bg-dark mb-3">
-      <div class="card-body">
-        <h5 class="card-title">Table Data Actual</h5>
-        <div class="table-responsive">
-          <table id="actualDataTable" class="table table-striped table-hover">
-            <thead class="thead-dark">
-              <tr></tr> 
-            </thead>
-            <tbody id="actualDataTableBody">
-            </tbody>
-          </table>
+<div class="">
+  <div class="row">
+    <!-- Card Model Peramalan -->
+    <div class="col-lg-3 col-md-6 col-12 mb-3">
+      <div class="card shadow">
+        <div class="card-body">
+          <h4 class="card-title"><b>Model Peramalan</b></h4>
+          <ul class="list-group">
+            <li class="list-group-item d-flex justify-content-between">
+              <span><b>Initial AI Model</b></span>
+              <span class="badge bg-secondary">Akurasi: 68.08%</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+              <span><b>Model 1</b></span>
+              <span class="badge bg-primary">Akurasi: 79.68%</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+              <span><b>Model 2</b></span>
+              <span class="badge bg-success">Akurasi: 90.18%</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+              <span><b>Model 3</b></span>
+              <span class="badge bg-info">Akurasi: 92.92%</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+              <span><b>Model 4</b></span>
+              <span class="badge bg-warning text-dark">Akurasi: 92.72%</span>
+            </li>
+          </ul>
         </div>
       </div>
     </div>
-  </div>
-</div>
 
-<div class="row">
-  <div class="col-lg-4 col-md-6 col-12 mb-3">
-    <div class="card text-white bg-dark mb-3">
-      <div class="card-body">
-        <h5 class="card-title">Model Evaluation</h5>
-        <ul id="modelEvaluation">
-        </ul>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-lg-4 col-md-6 col-12 mb-3">
-    <div class="card bg-dark mb-3">
-      <div class="card-body">
-        <h5 class="card-title text-white">Summary Forecast Data</h5>
-        <ul class="list-group text-dark" id="summary_Forecast">
-          <li class="list-group-item d-flex justify-content-between">
-            <span>Minimum:</span> <span id="forecastMin"></span>
-          </li>
-          <li class="list-group-item d-flex justify-content-between">
-            <span>Maximum:</span> <span id="forecastMax"></span>
-          </li>
-          <li class="list-group-item d-flex justify-content-between">
-            <span>Average:</span> <span id="forecastAvg"></span>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-lg-4 col-md-6 col-12 mb-3">
-    <div class="card bg-dark mb-3">
-      <div class="card-body">
-        <h5 class="card-title text-white">Summary Actual Data</h5>
-        <ul class="list-group text-dark" id="summary_Actual">
-          <li class="list-group-item d-flex justify-content-between">
-            <span>Minimum:</span> <span id="actualMin"></span>
-          </li>
-          <li class="list-group-item d-flex justify-content-between">
-            <span>Maximum:</span> <span id="actualMax"></span>
-          </li>
-          <li class="list-group-item d-flex justify-content-between">
-            <span>Average:</span> <span id="actualAvg"></span>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="row">
-  <div class="col-12 mb-3">
-    <div class="card text-white bg-dark mb-3">
-      <div class="card-body">
-        <h5 class="card-title">Annual Growth Table</h5>
+    <div class="col-lg-5 col-md-12 col-12 mb-3">
+      <div class="card shadow p-3">
+        <h4 class="text-center mb-3">Hasil Prediksi</h4>
         <div class="table-responsive">
-          <table id="growthTable" class="table table-striped table-hover">
-            <thead class="thead-dark">
+          <table class="table table-striped table-hover">
+            <thead class="text-white" style="background-color: #52736e">
               <tr>
-                <th scope="col">Year</th>
-                <th scope="col">Energy (GJ)</th>
-                <th scope="col">Growth (%)</th>
+                <th scope="col">Bulan</th>
+                <th scope="col">Model 1</th>
+                <th scope="col">Model 2</th>
+                <th scope="col">Model 3</th>
+                <th scope="col">Model 4</th>
               </tr>
             </thead>
-            <tbody id="growthTableBody">
+            
+            <tbody>
+              <tr>
+                <td>Jan 2025</td>
+                <td>1200</td>
+                <td>1225</td>
+                <td>1180</td>
+                <td>1210</td>
+              </tr>
+              <tr>
+                <td>Feb 2025</td>
+                <td>1250</td>
+                <td>1275</td>
+                <td>1230</td>
+                <td>1260</td>
+              </tr>
+              <tr>
+                <td>Mar 2025</td>
+                <td>1300</td>
+                <td>1330</td>
+                <td>1280</td>
+                <td>1310</td>
+              </tr>
+              <tr>
+                <td>Apr 2025</td>
+                <td>1350</td>
+                <td>1380</td>
+                <td>1335</td>
+                <td>1365</td>
+              </tr>
+              <tr>
+                <td>Mei 2025</td>
+                <td>1400</td>
+                <td>1440</td>
+                <td>1390</td>
+                <td>1420</td>
+              </tr>
+              <tr>
+                <td>Jun 2025</td>
+                <td>1450</td>
+                <td>1495</td>
+                <td>1445</td>
+                <td>1475</td>
+              </tr>
+              <tr>
+                <td>Jul 2025</td>
+                <td>1500</td>
+                <td>1550</td>
+                <td>1500</td>
+                <td>1530</td>
+              </tr>
+              <tr>
+                <td>Agu 2025</td>
+                <td>1555</td>
+                <td>1610</td>
+                <td>1560</td>
+                <td>1590</td>
+              </tr>
+              <tr>
+                <td>Sep 2025</td>
+                <td>1610</td>
+                <td>1670</td>
+                <td>1620</td>
+                <td>1650</td>
+              </tr>
+              <tr>
+                <td>Okt 2025</td>
+                <td>1665</td>
+                <td>1730</td>
+                <td>1680</td>
+                <td>1710</td>
+              </tr>
+              <tr>
+                <td>Nov 2025</td>
+                <td>1720</td>
+                <td>1790</td>
+                <td>1740</td>
+                <td>1770</td>
+              </tr>
+              <tr>
+                <td>Des 2025</td>
+                <td>1780</td>
+                <td>1855</td>
+                <td>1805</td>
+                <td>1835</td>
+              </tr>
             </tbody>
           </table>
         </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4 col-md-12 col-12 mb-3">
+      <div class="card shadow text-center p-3">
+        <h4>Visualisasi Data</h4>
       </div>
     </div>
   </div>

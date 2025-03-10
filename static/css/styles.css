@@ -131,7 +131,7 @@ body {
 
 /* Table with green card */
 .card[style*="background-color: #52736E"] .table tbody {
-  background-color: #52736e; /* Match card background */
+  background-color: #52736e; 
 }
 
 .card[style*="background-color: #52736E"] .table th,
@@ -167,7 +167,6 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 10px 15px;
-  border: 1px solid #ddd;
 }
 
 .list-group-item label {
