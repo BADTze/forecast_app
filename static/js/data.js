@@ -1,79 +1,69 @@
-// data.js
-document.addEventListener("DOMContentLoaded", function () {
-  fetchData("/raw_data", (data) => {
-    let tableBody = document.getElementById("actualDataTableBody");
-    let tableHead = document.querySelector("#actualDataTable thead tr");
+async function fetchModelEvaluation() {
+  try {
+    const response = await fetch("/model_evaluation");
+    const data = await response.json();
+    return data.MAPE; 
+  } catch (error) {
+    console.error("Error fetching model evaluation:", error);
+    return null;
+  }
+}
 
-    if (data.length > 0) {
-        tableHead.innerHTML = "";
+async function updateModelAccuracy() {
+  const mape = await fetchModelEvaluation();
+  if (mape !== null) {
+    const accuracy = (100 - mape).toFixed(2);
 
-        let headers = ["Month", "Energy (GJ)", "Remark"]; 
-
-        headers.forEach((key) => {
-            let th = document.createElement("th");
-            th.textContent = key;
-            tableHead.appendChild(th);
-        });
-
-        // Isi tabel dengan data mentah
-        tableBody.innerHTML = "";
-        data.forEach((row) => {
-            let tr = document.createElement("tr");
-            headers.forEach((key) => {
-                let td = document.createElement("td");
-                if (key === "Energy (GJ)" && !isNaN(row[key])) {
-                  td.textContent = parseFloat(row[key]).toFixed(2);
-              } else {
-                  td.textContent = row[key] !== undefined ? row[key] : "-";
-              }
-                tr.appendChild(td);
-            });
-            tableBody.appendChild(tr);
-        });
+    const modelAccuracyElement = document.getElementById("model-accuracy");
+    if (modelAccuracyElement) {
+      modelAccuracyElement.textContent = `Akurasi: ${accuracy}%`;
     }
-});
+  }
+}
 
-fetchData("/growth_data", (data) => {
-  let tableBody = document.getElementById("growthTableBody");
-  tableBody.innerHTML = "";
+async function fetchForecastData() {
+  try {
+    const response = await fetch("/forecast_data");
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching forecast data:", error);
+    return null;
+  }
+}
 
-  data.forEach((item) => {
-      let row = document.createElement("tr");
+async function updateForecastTable() {
+  const forecastData = await fetchForecastData();
+  if (forecastData) {
+    const tableBody = document.querySelector("#forecast-table");
+    tableBody.innerHTML = ""; 
 
-      let yearCell = document.createElement("td");
-      yearCell.textContent = item.Year;
+    forecastData.forEach((item) => {
+      const row = document.createElement("tr");
 
-      let energyCell = document.createElement("td");
-      energyCell.textContent = parseFloat(item.Energy).toFixed(2);
+      // Kolom DATE
+      const dateCell = document.createElement("td");
+      dateCell.textContent = item.ds; 
+      row.appendChild(dateCell);
 
-      let growthCell = document.createElement("td");
-      growthCell.textContent = item["Growth (%)"] !== "-" ? parseFloat(item["Growth (%)"]).toFixed(2) + "%" : "-";
+      // Kolom Model 1
+      const model1Cell = document.createElement("td");
+      model1Cell.textContent = item.yhat.toFixed(2); 
+      row.appendChild(model1Cell);
 
-      row.appendChild(yearCell);
-      row.appendChild(energyCell);
-      row.appendChild(growthCell);
+      // Kolom Model 2 (placeholder atau data jika tersedia)
+      const model2Cell = document.createElement("td");
+      model2Cell.textContent = "-"; 
+      row.appendChild(model2Cell);
 
+      // Tambahkan baris ke tabel
       tableBody.appendChild(row);
-  });
-});
+    });
+  }
+}
 
-  fetchData("/model_evaluation", (data) => {
-    let evaluationList = document.getElementById("modelEvaluation");
-    evaluationList.innerHTML = `
-          <li>MAPE: ${data.MAPE.toFixed(2)}%</li>
-          <li>MAE: ${data.MAE.toFixed(2)}</li>
-          <li>RMSE: ${data.RMSE.toFixed(2)}</li>`;
-  });
 
-  fetchData("/summary_forecast", (data) => {
-    document.getElementById("forecastMin").textContent = data.min.toFixed(2);
-    document.getElementById("forecastMax").textContent = data.max.toFixed(2);
-    document.getElementById("forecastAvg").textContent = data.avg.toFixed(2);
-  });
-
-  fetchData("/summary_actual", (data) => {
-    document.getElementById("actualMin").textContent = data.min.toFixed(2);
-    document.getElementById("actualMax").textContent = data.max.toFixed(2);
-    document.getElementById("actualAvg").textContent = data.avg.toFixed(2);
-  });
+document.addEventListener("DOMContentLoaded", () => {
+  updateModelAccuracy(); 
+  updateForecastTable(); 
 });

@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, render_template, redirect, url_for
+from flask_caching import Cache
 import pandas as pd
 import numpy as np
 import requests
@@ -7,6 +8,9 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 app = Flask(__name__)
 
+app.config['CACHE_TYPE'] = 'SimpleCache'  # Menggunakan cache berbasis memori
+app.config['CACHE_DEFAULT_TIMEOUT'] = 300  # Waktu kedaluwarsa cache dalam detik (5 menit)
+cache = Cache(app)
 # URL API Data
 API_URL = "http://10.10.2.70:3008/api/energy-emission/energy?start_year=2023&end_year=2024&start_month=01&end_month=12&is_emission=false"
 
@@ -85,12 +89,15 @@ def get_model_evaluation():
     return jsonify(evaluation)
 
 @app.route('/forecast_data')
+@cache.cached()  
 def get_forecast_data():
     forecast_data = forecast[['ds', 'yhat', 'yhat_upper', 'yhat_lower']].copy()
     forecast_data['actual'] = df['y']
     return jsonify(forecast_data.to_dict(orient='records'))
 
+
 @app.route('/dynamic_forecast')
+@cache.cached(query_string=True)
 def dynamic_forecast():
     periods = request.args.get('periods', default=12, type=int)
 
@@ -138,6 +145,11 @@ def get_growth_data():
     yearly_data["Growth (%)"] = yearly_data["Growth (%)"].fillna("-")
 
     return jsonify(yearly_data.to_dict(orient="records"))
+
+@app.route('/clear_cache')
+def clear_cache():
+    cache.clear()
+    return "Cache berhasil dibersihkan!", 200
 
 if __name__ == "__main__":
     app.run(debug=True)
