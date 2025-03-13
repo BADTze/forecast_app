@@ -8,8 +8,8 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 app = Flask(__name__)
 
-app.config['CACHE_TYPE'] = 'SimpleCache'  # Menggunakan cache berbasis memori
-app.config['CACHE_DEFAULT_TIMEOUT'] = 300  # Waktu kedaluwarsa cache dalam detik (5 menit)
+app.config['CACHE_TYPE'] = 'SimpleCache' 
+app.config['CACHE_DEFAULT_TIMEOUT'] = 300  
 cache = Cache(app)
 # URL API Data
 API_URL = "http://10.10.2.70:3008/api/energy-emission/energy?start_year=2023&end_year=2024&start_month=01&end_month=12&is_emission=false"
@@ -79,15 +79,6 @@ def get_actual_data():
     actual_data = merged_df[['ds', 'y']].to_dict(orient='records')
     return jsonify(actual_data)
 
-@app.route('/model_evaluation')
-def get_model_evaluation():
-    evaluation = {
-        "MAPE": mape,
-        "MAE": mae,
-        "RMSE": rmse
-    }
-    return jsonify(evaluation)
-
 @app.route('/forecast_data')
 @cache.cached()  
 def get_forecast_data():
@@ -136,6 +127,15 @@ def get_summary_actual():
         "avg": df['y'].mean()
     }
     return jsonify(summary_actual)
+
+@app.route('/model_evaluation')
+def get_model_evaluation():
+    evaluation = {
+        "MAPE": mape,
+        "MAE": mae,
+        "RMSE": rmse
+    }
+    return jsonify(evaluation)
 
 @app.route('/growth_data')
 def get_growth_data():

@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
   function fetchForecast(periods) {
     fetch(`/dynamic_forecast?periods=${periods}`)
       .then((response) => response.json())
@@ -6,6 +6,36 @@ document.addEventListener("DOMContentLoaded", function () {
         updateUI(data);
       })
       .catch((error) => console.error("Error fetching forecast:", error));
+  }
+
+  try {
+    const evaluationResponse = await fetch("/model_evaluation");
+    const evaluationData = await evaluationResponse.json();
+
+    const modelEvaluationElement = document.getElementById("modelEvaluation");
+    modelEvaluationElement.innerHTML = `
+      <li>MAPE: ${evaluationData.MAPE.toFixed(2)}%</li>
+      <li>MAE: ${evaluationData.MAE.toFixed(2)}</li>
+      <li>RMSE: ${evaluationData.RMSE.toFixed(2)}</li>
+    `;
+
+    // Fetch Summary Forecast Data
+    const forecastResponse = await fetch("/summary_forecast");
+    const forecastData = await forecastResponse.json();
+
+    document.getElementById("forecastMin").textContent = forecastData.min.toFixed(2);
+    document.getElementById("forecastMax").textContent = forecastData.max.toFixed(2);
+    document.getElementById("forecastAvg").textContent = forecastData.avg.toFixed(2);
+
+    // Fetch Summary Actual Data
+    const actualResponse = await fetch("/summary_actual");
+    const actualData = await actualResponse.json();
+
+    document.getElementById("actualMin").textContent = actualData.min.toFixed(2);
+    document.getElementById("actualMax").textContent = actualData.max.toFixed(2);
+    document.getElementById("actualAvg").textContent = actualData.avg.toFixed(2);
+  } catch (error) {
+    console.error("Error fetching data:", error);
   }
 
   function updateUI(data) {
@@ -107,7 +137,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Event Listener untuk submit periode forecast
   document
     .getElementById("forecastForm")
     .addEventListener("submit", function (event) {
@@ -116,6 +145,5 @@ document.addEventListener("DOMContentLoaded", function () {
       fetchForecast(periods);
     });
 
-  // Fetch default (12 bulan)
   fetchForecast(12);
 });

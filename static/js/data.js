@@ -37,26 +37,30 @@ async function updateForecastTable() {
   if (forecastData) {
     const tableBody = document.querySelector("#forecast-table");
     tableBody.innerHTML = ""; 
-
     forecastData.forEach((item) => {
       const row = document.createElement("tr");
 
+      const date = new Date(item.ds); 
+      const formattedDate = date.toLocaleDateString("en-GB", {
+        month: "2-digit",
+        year: "numeric",
+      }).replace("/", "-"); 
+
       // Kolom DATE
       const dateCell = document.createElement("td");
-      dateCell.textContent = item.ds; 
+      dateCell.textContent = formattedDate; 
       row.appendChild(dateCell);
 
-      // Kolom Model 1
+      // Kolom Model 1 (yhat)
       const model1Cell = document.createElement("td");
       model1Cell.textContent = item.yhat.toFixed(2); 
       row.appendChild(model1Cell);
 
-      // Kolom Model 2 (placeholder atau data jika tersedia)
+      // Kolom Model 2 (Jika ada)
       const model2Cell = document.createElement("td");
       model2Cell.textContent = "-"; 
       row.appendChild(model2Cell);
 
-      // Tambahkan baris ke tabel
       tableBody.appendChild(row);
     });
   }
