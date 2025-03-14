@@ -58,9 +58,9 @@ document.addEventListener("DOMContentLoaded", async function () {
       data.forEach((item) => {
         let row = document.createElement("tr");
         row.innerHTML = `<td>${formatDate(item.ds)}</td>
-                                <td>${item.yhat.toFixed(2)}</td>
-                                <td>${item.yhat_upper.toFixed(2)}</td>
-                                <td>${item.yhat_lower.toFixed(2)}</td>`;
+                          <td>${item.yhat.toFixed(2)}</td>
+                          <td>${item.yhat_upper.toFixed(2)}</td>
+                          <td>${item.yhat_lower.toFixed(2)}</td>`;
         forecastTableBody.appendChild(row);
       });
     }
@@ -73,8 +73,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         let actualValue = item.actual !== "-" ? item.actual.toFixed(2) : "-";
         let row = document.createElement("tr");
         row.innerHTML = `<td>${formatDate(item.ds)}</td>
-                                <td>${item.yhat.toFixed(2)}</td>
-                                <td>${actualValue}</td>`;
+                          <td>${item.yhat.toFixed(2)}</td>
+                          <td>${actualValue}</td>`;
         comparisonTableBody.appendChild(row);
       });
     }

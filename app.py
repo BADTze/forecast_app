@@ -1,3 +1,4 @@
+import datetime
 from flask import Flask, request, jsonify, render_template, redirect, url_for
 from flask_caching import Cache
 import pandas as pd
@@ -18,17 +19,15 @@ API_URL = "http://10.10.2.70:3008/api/energy-emission/energy?start_year=2023&end
 with open('models/prophet_model.pkl', 'rb') as f:
     model = pickle.load(f)
 
-# Function untuk mengambil data dari API
+#Function untuk mengambil data dari API
 def fetch_api_data():
     response = requests.get(API_URL)
     if response.status_code == 200:
         api_data = response.json()
         trend_data = api_data.get("data", {}).get("trendData", [])
         
-        # Filter hanya line "All"
         all_data = [entry for entry in trend_data if entry["line"] == "All"]
 
-        # Ambil hanya kolom month, year, dan indexEnergy
         extracted_data = []
         for entry in all_data:
             for item in entry["data"]:

@@ -10,5 +10,5 @@ function safeQuerySelector(id) {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-  // Other initialization code if needed
+  
 });
