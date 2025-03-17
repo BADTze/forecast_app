@@ -10,11 +10,11 @@
         <h4 class="card-title"><b>Model Peramalan</b></h4>
         <ul class="list-group">
           <li class="list-group-item d-flex justify-content-between">
-            <span><b>Model 1</b></span>
+            <span><b>Prophet</b></span>
             <span id="model-accuracy" class="badge"> Akurasi: Loading... </span>
           </li>
           <li class="list-group-item d-flex justify-content-between">
-            <span><b>Model 2</b></span>
+            <span><b>SARIMA</b></span>
             <span class="badge"> Akurasi: - </span>
           </li>
         </ul>
@@ -24,7 +24,7 @@
 
   <div class="col-lg-6">
     <div class="card shadow">
-      <div class="card-body">
+      <div class="card-body ">
         <h4 class="card-title"><b>Hasil Prediksi</b></h4>
         <div
           class="table-responsive"
@@ -34,8 +34,8 @@
             <thead class="thead-gold">
               <tr>
                 <th scope="col">DATE</th>
-                <th scope="col">Model 1</th>
-                <th scope="col">Model 2</th>
+                <th scope="col">Prophet</th>
+                <th scope="col">SARIMA</th>
               </tr>
             </thead>
             <tbody id="forecast-table"></tbody>
@@ -51,13 +51,14 @@
   <div class="col-12 mt-3">
     <div class="card shadow-lg border-2">
       <div class="card-body">
-        <div id="......." style="width: 100%; height: 400px"></div>
+        <div id="compa-forecast" style="width: 100%; height: 400px"></div>
       </div>
     </div>
   </div>
 </div>
 
 <!-- Load JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
 <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
 <script src="{{ url_for('static', filename='js/data.js') }}"></script>
 

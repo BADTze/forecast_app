@@ -12,8 +12,12 @@ app = Flask(__name__)
 app.config['CACHE_TYPE'] = 'SimpleCache' 
 app.config['CACHE_DEFAULT_TIMEOUT'] = 300  
 cache = Cache(app)
+
 # URL API Data
-API_URL = "http://10.10.2.70:3008/api/energy-emission/energy?start_year=2023&end_year=2024&start_month=01&end_month=12&is_emission=false"
+current_year =datetime.datetime.now().year
+start_year = current_year - 2
+end_year = current_year
+API_URL = f"http://10.10.2.70:3008/api/energy-emission/energy?start_year={start_year}&end_year={current_year}&start_month=01&end_month=12&is_emission=false"
 
 # Load model Prophet
 with open('models/prophet_model.pkl', 'rb') as f:
@@ -38,6 +42,10 @@ def fetch_api_data():
 
         df = pd.DataFrame(extracted_data)
         df["ds"] = pd.to_datetime(df["ds"])
+        if df.isnull().values.any():
+            print("ada data Nan")
+            df=df.dropna()
+            
         return df
     else:
         return None
@@ -92,8 +100,10 @@ def dynamic_forecast():
     periods = request.args.get('periods', default=12, type=int)
 
     # Forecast future dates
-    future = model.make_future_dataframe(periods=periods, freq='M')
+    # last_date=df["ds"].max() //last data
+    future = model.make_future_dataframe(periods=periods, freq='ME')
     future = future[future["ds"] >= df["ds"].min()]
+    # future = future[future["ds"] > last_date] //optional
     
     # Predict future data
     forecast = model.predict(future)
@@ -105,7 +115,7 @@ def dynamic_forecast():
     merged_data.drop(columns=['y'], inplace=True)
 
     # Convert NaN in actual to "-"
-    merged_data['actual'].fillna("-", inplace=True)
+    merged_data['actual'] = merged_data['actual'].fillna("-")
 
     return jsonify(merged_data.to_dict(orient='records'))
 

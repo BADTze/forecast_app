@@ -23,7 +23,7 @@ async function updateModelAccuracy() {
 
 async function fetchForecastData() {
   try {
-    const response = await fetch("/forecast_data");
+    const response = await fetch("/dynamic_forecast");
     const data = await response.json();
     return data;
   } catch (error) {
@@ -37,16 +37,19 @@ async function updateForecastTable() {
   if (forecastData) {
     const tableBody = document.querySelector("#forecast-table");
     tableBody.innerHTML = "";
-    forecastData.forEach((item) => {
+
+    const currentYear = new Date().getFullYear(); 
+
+    const filteredData = forecastData.filter(item => {
+      const date = new Date(item.ds);
+      return date.getFullYear() >= currentYear; 
+    });
+
+    filteredData.forEach((item) => {
       const row = document.createElement("tr");
 
       const date = new Date(item.ds);
-      const formattedDate = date
-        .toLocaleDateString("en-GB", {
-          month: "2-digit",
-          year: "numeric",
-        })
-        .replace("/", "-");
+      const formattedDate = date.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
 
       // Kolom DATE
       const dateCell = document.createElement("td");
@@ -58,7 +61,7 @@ async function updateForecastTable() {
       model1Cell.textContent = item.yhat.toFixed(2);
       row.appendChild(model1Cell);
 
-      // Kolom Model 2 (Jika ada)
+      // Kolom Model 2 (jika ada)
       const model2Cell = document.createElement("td");
       model2Cell.textContent = "-";
       row.appendChild(model2Cell);
@@ -68,51 +71,51 @@ async function updateForecastTable() {
   }
 }
 
-const forecastPlot = document.getElementById("forecastPlot");
-if (forecastPlot) {
-  let chart = echarts.init(forecastPlot);
-  let option = {
-    title: {
-      text: "Forecast Comparison",
-      left: "center",
-      textStyle: { color: "#f4f4f4", fontSize: 20 },
-    },
-    tooltip: { trigger: "axis" },
-    legend: {
-      data: ["model 1", "model 2"],
-      top: 30,
-      textStyle: { color: "#f4f4f4" },
-    },
-    xAxis: {
-      type: "category",
-      data: labels,
-      axisLabel: { rotate: -45, color: "#f4f4f4" },
-    },
-    yAxis: {
-      type: "value",
-      axisLabel: { color: "#f4f4f4" },
-    },
-    series: [
-      {
-        name: "Model 1",
-        type: "line",
-        data: model_1,
-        color: "#ff4d4d",
-        smooth: true,
-      },
-      {
-        name: "Model 2",
-        type: "line",
-        data: model_2,
-        color: "#4d79ff",
-        smooth: true,
-      },
-    ],
-  };
-  chart.setOption(option);
+
+async function fetchChartData() {
+  const forecastData = await fetchForecastData();
+  if (forecastData) {
+    let labels = [];
+    let model_1 = [];
+    let model_2 = [];
+
+    const currentYear = new Date().getFullYear(); 
+
+    // Filter hanya data dari tahun berjalan ke atas
+    const filteredData = forecastData.filter(item => {
+      const date = new Date(item.ds);
+      return date.getFullYear() >= currentYear;
+    });
+
+    filteredData.forEach((item) => {
+      const date = new Date(item.ds);
+      const formattedDate = date.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
+
+      labels.push(formattedDate);
+      model_1.push(item.yhat.toFixed(2));
+      model_2.push(null);
+    });
+
+    let chart = echarts.init(document.getElementById("compa-forecast"));
+    let option = {
+      title: { text: "Forecast Comparison", left: "center", textStyle: { color: "#21130d", fontSize: 20 } },
+      tooltip: { trigger: "axis" },
+      legend: { data: ["Prophet", "SARIMA"], top: 30, textStyle: { color: "#21130d" } },
+      xAxis: { type: "category", data: labels, axisLabel: { rotate: -45, color: "#21130d" } },
+      yAxis: { type: "value", axisLabel: { color: "#21130d" } },
+      series: [
+        { name: "Prophet", type: "line", data: model_1, color: "#ff4d4d", smooth: true },
+        { name: "SARIMA", type: "line", data: model_2, color: "#4d79ff", smooth: true, showSymbol: false, lineStyle: { opacity: 0 } }
+      ]
+    };
+    chart.setOption(option);
+  }
 }
+
+
 
 document.addEventListener("DOMContentLoaded", () => {
   updateModelAccuracy();
   updateForecastTable();
+  fetchChartData();
 });
