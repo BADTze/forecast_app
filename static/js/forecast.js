@@ -27,13 +27,9 @@ async function fetchForecastData() {
 async function fetchSummaryData() {
   try {
       const response = await fetch("/summary_data");
+      if (!response.ok) throw new Error("Gagal mengambil summary data");
+
       const data = await response.json();
-
-      if (!data) {
-          console.error("Gagal mengambil summary data.");
-          return;
-      }
-
       document.getElementById("forecastMin").innerText = data.summary_forecast?.min || "-";
       document.getElementById("forecastMax").innerText = data.summary_forecast?.max || "-";
       document.getElementById("forecastAvg").innerText = data.summary_forecast?.average || "-";
@@ -42,9 +38,10 @@ async function fetchSummaryData() {
       document.getElementById("actualMax").innerText = data.summary_actual?.max || "-";
       document.getElementById("actualAvg").innerText = data.summary_actual?.average || "-";
   } catch (error) {
-      console.error("Error mengambil summary data:", error);
+      console.error("Error fetching summary data:", error);
   }
 }
+
 
 async function fetchModelEvaluation() {
   try {
