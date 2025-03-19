@@ -1,149 +1,110 @@
-document.addEventListener("DOMContentLoaded", async function () {
-  function fetchForecast(periods) {
-    fetch(`/dynamic_forecast?periods=${periods}`)
-      .then((response) => response.json())
-      .then((data) => {
-        updateUI(data);
-      })
-      .catch((error) => console.error("Error fetching forecast:", error));
-  }
-
-  try {
-    const evaluationResponse = await fetch("/model_evaluation");
-    const evaluationData = await evaluationResponse.json();
-
-    const modelEvaluationElement = document.getElementById("modelEvaluation");
-    modelEvaluationElement.innerHTML = `
-      <li>MAPE: ${evaluationData.MAPE.toFixed(2)}%</li>
-      <li>MAE: ${evaluationData.MAE.toFixed(2)}</li>
-      <li>RMSE: ${evaluationData.RMSE.toFixed(2)}</li>
-    `;
-
-    // Fetch Summary Forecast Data
-    const forecastResponse = await fetch("/summary_forecast");
-    const forecastData = await forecastResponse.json();
-
-    document.getElementById("forecastMin").textContent = forecastData.min.toFixed(2);
-    document.getElementById("forecastMax").textContent = forecastData.max.toFixed(2);
-    document.getElementById("forecastAvg").textContent = forecastData.avg.toFixed(2);
-
-    // Fetch Summary Actual Data
-    const actualResponse = await fetch("/summary_actual");
-    const actualData = await actualResponse.json();
-
-    document.getElementById("actualMin").textContent = actualData.min.toFixed(2);
-    document.getElementById("actualMax").textContent = actualData.max.toFixed(2);
-    document.getElementById("actualAvg").textContent = actualData.avg.toFixed(2);
-  } catch (error) {
-    console.error("Error fetching data:", error);
-  }
-
-  function updateUI(data) {
-    function formatDate(dateStr) {
-      const date = new Date(dateStr);
-      return `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
-    }
-
-    // Extract data for plotting and tables
-    const labels = data.map((item) => formatDate(item.ds));
-    const forecastValues = data.map((item) => item.yhat.toFixed(2));
-    const upperValues = data.map((item) => item.yhat_upper.toFixed(2));
-    const lowerValues = data.map((item) => item.yhat_lower.toFixed(2));
-    const actualValues = data.map((item) => item.actual !== "-" ? item.actual.toFixed(2) : null);
-
-    // **Populate Forecast Table**
-    const forecastTableBody = document.getElementById("forecastTableBody");
-    if (forecastTableBody) {
-      forecastTableBody.innerHTML = "";
-      data.forEach((item) => {
-        let row = document.createElement("tr");
-        row.innerHTML = `<td>${formatDate(item.ds)}</td>
-                          <td>${item.yhat.toFixed(2)}</td>
-                          <td>${item.yhat_upper.toFixed(2)}</td>
-                          <td>${item.yhat_lower.toFixed(2)}</td>`;
-        forecastTableBody.appendChild(row);
-      });
-    }
-
-    // **Populate Actual vs Forecast Table**
-    const comparisonTableBody = document.getElementById("comparisonTableBody");
-    if (comparisonTableBody) {
-      comparisonTableBody.innerHTML = "";
-      data.forEach((item) => {
-        let actualValue = item.actual !== "-" ? item.actual.toFixed(2) : "-";
-        let row = document.createElement("tr");
-        row.innerHTML = `<td>${formatDate(item.ds)}</td>
-                          <td>${item.yhat.toFixed(2)}</td>
-                          <td>${actualValue}</td>`;
-        comparisonTableBody.appendChild(row);
-      });
-    }
-
-    // **Render ECharts Chart**
-    const forecastPlot = document.getElementById("forecastPlot");
-    if (forecastPlot) {
-      let chart = echarts.init(forecastPlot);
-      let option = {
-        title: {
-          text: "Energy Forecast vs Actual",
-          left: "center",
-          textStyle: { color: "#f4f4f4", fontSize: 20 },
-        },
-        tooltip: { trigger: "axis" },
-        legend: {
-          data: ["Forecast", "Actual", "Upper Bound", "Lower Bound"],
-          top: 30,
-          textStyle: { color: "#f4f4f4" },
-        },
-        xAxis: {
-          type: "category",
-          data: labels,
-          axisLabel: { rotate: -45, color: "#f4f4f4" },
-        },
-        yAxis: {
-          type: "value",
-          axisLabel: { color: "#f4f4f4" },
-        },
-        series: [
-          {
-            name: "Forecast",
-            type: "line",
-            data: forecastValues,
-            color: "#ff4d4d",
-            smooth: true,
-          },
-          {
-            name: "Actual",
-            type: "line",
-            data: actualValues,
-            color: "#4d79ff",
-            smooth: true,
-          },
-          {
-            name: "Upper Bound",
-            type: "line",
-            data: upperValues,
-            color: "#ffcc00",
-          },
-          {
-            name: "Lower Bound",
-            type: "line",
-            data: lowerValues,
-            color: "#ffcc00",
-          },
-        ],
-      };
-      chart.setOption(option);
-    }
-  }
-
-  document
-    .getElementById("forecastForm")
-    .addEventListener("submit", function (event) {
-      event.preventDefault();
-      let periods = document.getElementById("periods").value;
-      fetchForecast(periods);
-    });
-
-  fetchForecast(12);
+document.addEventListener("DOMContentLoaded", function () {
+  fetchForecastData();
+  fetchSummaryData();
+  fetchModelEvaluation();
 });
+
+async function fetchForecastData() {
+  try {
+      const actualResponse = await fetch("/actual_data");
+      const forecastResponse = await fetch("/forecast_data");
+
+      const actualData = await actualResponse.json();
+      const forecastData = await forecastResponse.json();
+
+      if (!actualData || !forecastData) {
+          console.error("Gagal mengambil data actual atau forecast.");
+          return;
+      }
+
+      plotForecastChart(actualData, forecastData);
+      populateForecastTable(forecastData);
+  } catch (error) {
+      console.error("Error mengambil data:", error);
+  }
+}
+
+async function fetchSummaryData() {
+  try {
+      const response = await fetch("/summary_data");
+      const data = await response.json();
+
+      if (!data) {
+          console.error("Gagal mengambil summary data.");
+          return;
+      }
+
+      document.getElementById("forecastMin").innerText = data.summary_forecast?.min || "-";
+      document.getElementById("forecastMax").innerText = data.summary_forecast?.max || "-";
+      document.getElementById("forecastAvg").innerText = data.summary_forecast?.average || "-";
+
+      document.getElementById("actualMin").innerText = data.summary_actual?.min || "-";
+      document.getElementById("actualMax").innerText = data.summary_actual?.max || "-";
+      document.getElementById("actualAvg").innerText = data.summary_actual?.average || "-";
+  } catch (error) {
+      console.error("Error mengambil summary data:", error);
+  }
+}
+
+async function fetchModelEvaluation() {
+  try {
+      const response = await fetch("/model_evaluation");
+      const data = await response.json();
+
+      if (!data) {
+          console.error("Gagal mengambil model evaluation.");
+          return;
+      }
+
+      const evalList = document.getElementById("modelEvaluation");
+      evalList.innerHTML = `
+          <li>MAE: ${data.MAE.toFixed(4)}</li>
+          <li>MAPE: ${data.MAPE.toFixed(4)}%</li>
+          <li>RMSE: ${data.RMSE.toFixed(4)}</li>
+      `;
+  } catch (error) {
+      console.error("Error mengambil model evaluation:", error);
+  }
+}
+
+function plotForecastChart(actualData, forecastData) {
+  let chartDom = document.getElementById("forecastPlot");
+  let myChart = echarts.init(chartDom);
+
+  let actualSeries = actualData.map(d => [d.ds, d.y]);
+  let yhatSeries = forecastData.map(d => [d.ds, d.yhat]);
+  let yhatUpperSeries = forecastData.map(d => [d.ds, d.yhat_upper]);
+  let yhatLowerSeries = forecastData.map(d => [d.ds, d.yhat_lower]);
+
+  let option = {
+      title: { text: "Forecast vs Actual Data", left: "center", textStyle: { color: "#fff" } },
+      tooltip: { trigger: "axis" },
+      legend: { data: ["Actual", "Forecast", "Upper Bound", "Lower Bound"], textStyle: { color: "#fff" } },
+      xAxis: { type: "time", axisLabel: { color: "#fff" } },
+      yAxis: { type: "value", axisLabel: { color: "#fff" } },
+      series: [
+          { name: "Actual", type: "line", data: actualSeries, color: "#ffcc00" },
+          { name: "Forecast", type: "line", data: yhatSeries, color: "#3498db", lineStyle: { type: "dashed" } },
+          { name: "Upper Bound", type: "line", data: yhatUpperSeries, color: "#2ecc71", lineStyle: { type: "dotted" } },
+          { name: "Lower Bound", type: "line", data: yhatLowerSeries, color: "#e74c3c", lineStyle: { type: "dotted" } }
+      ]
+  };
+
+  myChart.setOption(option);
+}
+
+function populateForecastTable(forecastData) {
+  let tableBody = document.getElementById("forecastTableBody");
+  tableBody.innerHTML = "";
+
+  forecastData.forEach(item => {
+      let row = document.createElement("tr");
+      row.innerHTML = `
+          <td>${new Date(item.ds).toLocaleDateString()}</td>
+          <td>${item.yhat.toFixed(4)}</td>
+          <td>${item.yhat_upper.toFixed(4)}</td>
+          <td>${item.yhat_lower.toFixed(4)}</td>
+      `;
+      tableBody.appendChild(row);
+  });
+}

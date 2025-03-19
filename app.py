@@ -1,11 +1,11 @@
 import datetime
-from flask import Flask, request, jsonify, render_template, redirect, url_for
+from flask import Flask, json, request, jsonify, render_template, redirect, url_for
 from flask_caching import Cache
 import pandas as pd
 import numpy as np
 import requests
 import pickle
-from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.metrics import mean_absolute_error, mean_absolute_percentage_error, mean_squared_error
 
 app = Flask(__name__)
 
@@ -23,47 +23,14 @@ API_URL = f"http://10.10.2.70:3008/api/energy-emission/energy?start_year={start_
 with open('models/prophet_model.pkl', 'rb') as f:
     model = pickle.load(f)
 
-#Function untuk mengambil data dari API
-def fetch_api_data():
-    response = requests.get(API_URL)
-    if response.status_code == 200:
-        api_data = response.json()
-        trend_data = api_data.get("data", {}).get("trendData", [])
-        
-        all_data = [entry for entry in trend_data if entry["line"] == "All"]
-
-        extracted_data = []
-        for entry in all_data:
-            for item in entry["data"]:
-                extracted_data.append({
-                    "ds": f"{item['year']}-{item['month']}-01",  
-                    "y": item["values"]["indexEnergy"]
-                })
-
-        df = pd.DataFrame(extracted_data)
-        df["ds"] = pd.to_datetime(df["ds"])
-        if df.isnull().values.any():
-            print("ada data Nan")
-            df=df.dropna()
-            
-        return df
-    else:
+def replace_nan_with_null(obj):
+    if isinstance(obj, float) and np.isnan(obj):
         return None
-
-# Ambil data dari API
-df = fetch_api_data()
-if df is None:
-    raise ValueError("Gagal mengambil data dari API!")
-
-# Prediksi Data Menggunakan Prophet
-future = df[['ds']].copy()
-forecast = model.predict(future)
-merged_df = df.merge(forecast[['ds', 'yhat']], on='ds', how='inner')
-
-# Evaluasi model
-mae = mean_absolute_error(merged_df['y'], merged_df['yhat'])
-rmse = np.sqrt(mean_squared_error(merged_df['y'], merged_df['yhat']))
-mape = np.mean(np.abs((merged_df['y'] - merged_df['yhat']) / merged_df['y'])) * 100
+    elif isinstance(obj, dict):
+        return {k: replace_nan_with_null(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [replace_nan_with_null(v) for v in obj]
+    return obj
 
 @app.route('/')
 def home_page():
@@ -81,79 +48,114 @@ def data_page():
 def about_page():
     return render_template('about.html')
 
+# Route untuk mengambil data aktual
 @app.route('/actual_data')
 def get_actual_data():
-    actual_data = merged_df[['ds', 'y']].to_dict(orient='records')
-    return jsonify(actual_data)
+    response = requests.get(API_URL)
+    if response.status_code == 200:
+        api_data = response.json()
+        trend_data = api_data.get("data", {}).get("trendData", [])
+        
+        all_data = [entry for entry in trend_data if entry["line"] == "All"]
 
+        extracted_data = []
+        for entry in all_data:
+            for item in entry["data"]:
+                extracted_data.append({
+                    "ds": f"{item['year']}-{item['month']}-01",  
+                    "y": item["values"]["indexEnergy"]
+                })
+
+        df = pd.DataFrame(extracted_data)
+        df["ds"] = pd.to_datetime(df["ds"])
+        
+        if df.isnull().values.any():
+            print("Ada data NaN, menghapus data tersebut...")
+            df = df.dropna()
+            
+        return jsonify(df.to_dict(orient='records'))
+    else:
+        return jsonify({"error": "Gagal mengambil data dari API"}), 500
+
+# Route untuk melakukan forecasting secara dinamis
 @app.route('/forecast_data')
-@cache.cached()  
+@cache.cached(timeout=3600)  
 def get_forecast_data():
-    forecast_data = forecast[['ds', 'yhat', 'yhat_upper', 'yhat_lower']].copy()
-    forecast_data['actual'] = df['y']
-    return jsonify(forecast_data.to_dict(orient='records'))
+    # Hitung tanggal mulai dan akhir untuk prediksi
+    start_date = f"{start_year}-01-01"
+    end_date = f"{end_year + 1}-12-01" 
 
-
-@app.route('/dynamic_forecast')
-@cache.cached(query_string=True)
-def dynamic_forecast():
-    periods = request.args.get('periods', default=12, type=int)
-
-    # Forecast future dates
-    # last_date=df["ds"].max() //last data
-    future = model.make_future_dataframe(periods=periods, freq='ME')
-    future = future[future["ds"] >= df["ds"].min()]
-    # future = future[future["ds"] > last_date] //optional
-    
-    # Predict future data
+    future = model.make_future_dataframe(periods=12, freq='M')
     forecast = model.predict(future)
+    forecast_filtered = forecast[(forecast['ds'] >= start_date) & (forecast['ds'] <= end_date)]
 
-    # Merge with actual data
-    merged_data = forecast[['ds', 'yhat', 'yhat_upper', 'yhat_lower']]
-    merged_data = merged_data.merge(df[['ds', 'y']], on='ds', how='left')
-    merged_data['actual'] = merged_data['y'].where(merged_data['ds'] <= df['ds'].max(), None)
-    merged_data.drop(columns=['y'], inplace=True)
+    forecast_data = forecast_filtered[['ds', 'yhat']].to_dict(orient='records')
+    return jsonify(forecast_data)
 
-    # Convert NaN in actual to "-"
-    merged_data['actual'] = merged_data['actual'].fillna("-")
+@app.route('/summary_data')
+def get_summary_data():
+    actual_response = requests.get(request.host_url + 'actual_data')
+    forecast_response = requests.get(request.host_url + 'forecast_data')
 
-    return jsonify(merged_data.to_dict(orient='records'))
+    if actual_response.status_code != 200 or forecast_response.status_code != 200:
+        return jsonify({"error": "Gagal mengambil data actual atau forecast"}), 500
 
-@app.route('/summary_forecast')
-def get_summary_forecast():
-    summary_forecast = {
-        "min": merged_df['yhat'].min(),
-        "max": merged_df['yhat'].max(),
-        "avg": merged_df['yhat'].mean()
+    actual_data = pd.DataFrame(actual_response.json())
+    forecast_data = pd.DataFrame(forecast_response.json())
+
+    # Pastikan format tanggal sesuai
+    actual_data["ds"] = pd.to_datetime(actual_data["ds"])
+    forecast_data["ds"] = pd.to_datetime(forecast_data["ds"])
+
+    # Hitung summary statistik
+    def calculate_summary(df, column):
+        return {
+            "min": round(df[column].min(), 4),
+            "max": round(df[column].max(), 4),
+            "average": round(df[column].mean(), 4)
+        }
+
+    summary_actual = calculate_summary(actual_data, "y") if not actual_data.empty else None
+    summary_forecast = calculate_summary(forecast_data, "yhat") if not forecast_data.empty else None
+
+    summary_result = {
+        "summary_actual": summary_actual,
+        "summary_forecast": summary_forecast
     }
-    return jsonify(summary_forecast)
 
-@app.route('/summary_actual')
-def get_summary_actual():
-    summary_actual = {
-        "min": df['y'].min(),
-        "max": df['y'].max(),
-        "avg": df['y'].mean()
-    }
-    return jsonify(summary_actual)
+    return jsonify(summary_result)
 
 @app.route('/model_evaluation')
-def get_model_evaluation():
-    evaluation = {
-        "MAPE": mape,
-        "MAE": mae,
-        "RMSE": rmse
+def evaluate_model():
+    actual_response = requests.get(request.host_url + 'actual_data')
+    forecast_response = requests.get(request.host_url + 'forecast_data')
+
+    if actual_response.status_code != 200 or forecast_response.status_code != 200:
+        return jsonify({"error": "Gagal mengambil data actual atau forecast"}), 500
+
+    actual_data = pd.DataFrame(actual_response.json())
+    forecast_data = pd.DataFrame(forecast_response.json())
+    actual_data["ds"] = pd.to_datetime(actual_data["ds"])
+    forecast_data["ds"] = pd.to_datetime(forecast_data["ds"])
+    merged_df = actual_data.merge(forecast_data, on="ds", how="inner")
+    
+    if merged_df.empty:
+        return jsonify({"error": "Tidak ada data yang cocok untuk evaluasi"}), 400
+
+    y_actual = merged_df["y"]
+    y_forecast = merged_df["yhat"]
+
+    mae = mean_absolute_error(y_actual, y_forecast)
+    mape = mean_absolute_percentage_error(y_actual, y_forecast)
+    rmse = np.sqrt(mean_squared_error(y_actual, y_forecast)) 
+
+    evaluation_metrics = {
+        "MAE": round(mae, 4),
+        "MAPE": round(mape * 100, 2),  
+        "RMSE": round(rmse, 4)
     }
-    return jsonify(evaluation)
 
-@app.route('/growth_data')
-def get_growth_data():
-    df["Year"] = df["ds"].dt.year
-    yearly_data = df.groupby("Year")["y"].sum().reset_index()
-    yearly_data["Growth (%)"] = yearly_data["y"].pct_change() * 100
-    yearly_data["Growth (%)"] = yearly_data["Growth (%)"].fillna("-")
-
-    return jsonify(yearly_data.to_dict(orient="records"))
+    return jsonify(evaluation_metrics)
 
 @app.route('/clear_cache')
 def clear_cache():
