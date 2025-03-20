@@ -79,19 +79,111 @@ def get_actual_data():
 
 # Route untuk melakukan forecasting secara dinamis
 @app.route('/forecast_data')
-@cache.cached(timeout=3600)  
+@cache.cached(timeout=3600)
 def get_forecast_data():
-    # Hitung tanggal mulai dan akhir untuk prediksi
     start_date = f"{start_year}-01-01"
-    end_date = f"{end_year + 1}-12-01" 
+    end_date = f"{end_year + 1}-12-01"
 
     future = model.make_future_dataframe(periods=12, freq='M')
     forecast = model.predict(future)
     forecast_filtered = forecast[(forecast['ds'] >= start_date) & (forecast['ds'] <= end_date)]
 
-    forecast_data = forecast_filtered[['ds', 'yhat']].to_dict(orient='records')
+    forecast_data = forecast_filtered[['ds', 'yhat', 'yhat_upper', 'yhat_lower']].to_dict(orient='records')
     return jsonify(forecast_data)
 
+# Route Summary Data
+@app.route('/summary_data')
+def summary_data():
+    try:
+        actual_response = requests.get("http://127.0.0.1:5000/actual_data")
+        forecast_response = requests.get("http://127.0.0.1:5000/forecast_data")
+
+        if actual_response.status_code != 200 or forecast_response.status_code != 200:
+            return jsonify({"error": "Gagal mengambil data"}), 500
+
+        actual_data = actual_response.json()
+        forecast_data = forecast_response.json()
+
+        if not actual_data or not forecast_data:
+            return jsonify({"error": "Data kosong dari API"}), 500
+
+        actual_df = pd.DataFrame(actual_data)
+        forecast_df = pd.DataFrame(forecast_data)
+
+        summary_actual = {
+            "min": round(actual_df["y"].min(), 2),
+            "max": round(actual_df["y"].max(), 2),
+            "average": round(actual_df["y"].mean(), 2)
+        }
+
+        summary_forecast = {
+            "min": round(forecast_df["yhat"].min(), 2),
+            "max": round(forecast_df["yhat"].max(), 2),
+            "average": round(forecast_df["yhat"].mean(), 2)
+        }
+
+        return jsonify({"summary_actual": summary_actual, "summary_forecast": summary_forecast})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# Route Model evaluation
+@app.route('/model_evaluation')
+def model_evaluation():
+    try:
+        actual_response = requests.get("http://127.0.0.1:5000/actual_data")
+        forecast_response = requests.get("http://127.0.0.1:5000/forecast_data")
+
+        if actual_response.status_code != 200 or forecast_response.status_code != 200:
+            return jsonify({"error": "Gagal mengambil data"}), 500
+
+        actual_data = actual_response.json()
+        forecast_data = forecast_response.json()
+
+        if not actual_data or not forecast_data:
+            return jsonify({"error": "Data kosong dari API"}), 500
+
+        actual_df = pd.DataFrame(actual_data)
+        forecast_df = pd.DataFrame(forecast_data)
+
+        merged_df = pd.merge(actual_df, forecast_df, on="ds", how="inner")
+
+        mae = mean_absolute_error(merged_df["y"], merged_df["yhat"])
+        mape = mean_absolute_percentage_error(merged_df["y"], merged_df["yhat"])
+        rmse = np.sqrt(mean_squared_error(merged_df["y"], merged_df["yhat"]))
+
+        evaluation = {
+            "MAE": round(mae, 2),
+            "MAPE": round(mape * 100, 2),
+            "RMSE": round(rmse, 2)
+        }
+
+        return jsonify(evaluation)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/compare_data')
+def get_comparison_data():
+    actual_response = requests.get("http://127.0.0.1:5000/actual_data")
+    forecast_response = requests.get("http://127.0.0.1:5000/forecast_data")
+
+    if actual_response.status_code != 200 or forecast_response.status_code != 200:
+        return jsonify({"error": "Gagal mengambil data actual atau forecast"}), 500
+
+    actual_data = pd.DataFrame(actual_response.json())
+    forecast_data = pd.DataFrame(forecast_response.json())
+
+    actual_data["ds"] = pd.to_datetime(actual_data["ds"]).dt.strftime("%b %Y")
+    forecast_data["ds"] = pd.to_datetime(forecast_data["ds"]).dt.strftime("%b %Y")
+
+    merged_df = pd.merge(forecast_data, actual_data, on="ds", how="left", suffixes=("_forecast", "_actual"))
+    merged_df["yhat"] = merged_df["yhat"].apply(lambda x: round(x, 2) if pd.notnull(x) else None)
+    merged_df["y_actual"] = merged_df["y"].apply(lambda x: round(x, 2) if pd.notnull(x) else None)
+
+    comparison_data = merged_df[["ds", "yhat", "y_actual"]].to_dict(orient="records")
+
+    return jsonify(comparison_data)
 
 @app.route('/clear_cache')
 def clear_cache():
