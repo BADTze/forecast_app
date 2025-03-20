@@ -1,9 +1,7 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // Ambil data forecast & actual secara bersamaan
     Promise.all([fetch("/forecast_data"), fetch("/actual_data")])
       .then(([forecastRes, actualRes]) => Promise.all([forecastRes.json(), actualRes.json()]))
       .then(([forecastData, actualData]) => {
-        // Format tanggal untuk forecast
         let labels = forecastData.map(item =>
           new Date(item.ds).toLocaleString("en-US", { month: "short", year: "numeric" })
         );
@@ -62,7 +60,7 @@ document.addEventListener("DOMContentLoaded", function () {
   
         // Isi Tabel Forecast dengan Format Tanggal & Angka
         let tableBody = document.getElementById("forecastTableBody");
-        tableBody.innerHTML = ""; // Kosongkan tabel sebelum diisi
+        tableBody.innerHTML = ""; 
         forecastData.forEach((item, index) => {
           let formattedDate = labels[index];
           let row = `<tr>
@@ -77,7 +75,7 @@ document.addEventListener("DOMContentLoaded", function () {
         // Isi Tabel Perbandingan Forecast vs Actual
         let comparisonTableBody = document.getElementById("comparisonTableBody");
         if (comparisonTableBody) {
-          comparisonTableBody.innerHTML = ""; // Kosongkan tabel
+          comparisonTableBody.innerHTML = ""; 
           labels.forEach((date, index) => {
             let row = `<tr>
               <td>${date}</td>

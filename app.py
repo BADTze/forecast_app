@@ -162,7 +162,8 @@ def model_evaluation():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
+
+# Route Compare Data
 @app.route('/compare_data')
 def get_comparison_data():
     actual_response = requests.get("http://127.0.0.1:5000/actual_data")
