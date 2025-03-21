@@ -14,7 +14,7 @@ app.config['CACHE_DEFAULT_TIMEOUT'] = 300
 cache = Cache(app)
 
 # URL API Data
-current_year =datetime.datetime.now().year
+current_year = datetime.datetime.now().year
 start_year = current_year - 2
 end_year = current_year
 API_URL = f"http://10.10.2.70:3008/api/energy-emission/energy?start_year={start_year}&end_year={current_year}&start_month=01&end_month=12&is_emission=false"
@@ -43,10 +43,6 @@ def forecast_page():
 @app.route('/data')
 def data_page():
     return render_template('data.html')
-
-@app.route('/about')
-def about_page():
-    return render_template('about.html')
 
 # Route untuk mengambil data aktual
 @app.route('/actual_data')
