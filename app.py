@@ -17,7 +17,7 @@ cache = Cache(app)
 current_year =datetime.datetime.now().year
 start_year = current_year - 2
 end_year = current_year
-API_URL = f"http://10.10.2.70:3008/api/energy-emission/energy?start_year={start_year}&end_year={current_year}&start_month=01&end_month=12&is_emission=false"
+API_URL = f"http://localhost:3000/api/energy?start_year={start_year}&end_year={current_year}&start_month=01&end_month=12"
 
 # Load model Prophet
 with open('models/prophet_model.pkl', 'rb') as f:
