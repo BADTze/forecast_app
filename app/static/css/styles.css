@@ -18,6 +18,7 @@ body {
   flex: 1;
   display: flex;
   flex-direction: row;
+  row-gap: 1;
 }
 
 .sidebar {
@@ -160,6 +161,7 @@ body {
   overflow: hidden;
   border-radius: inherit;
   background-clip: padding-box;
+  
 }
 
 .list-group-item {
@@ -176,3 +178,89 @@ body {
 .list-group-item span {
   font-size: 14px;
 }
+
+/* Custom button*/
+.custom-btn {
+  background-color: #2e3e3a !important;
+  color: white !important;
+  border: none;
+}
+
+.custom-btn:hover {
+  background-color: #42534f !important;
+}
+
+/* data dashboard*/
+.flex-dashboard {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.flex-dashboard > .card-wrapper {
+  flex: 1 1 25%; 
+  min-width: 250px;
+}
+
+.flex-dashboard > .card-wrapper.wide {
+  flex: 2 1 50%; 
+}
+
+.flex-dashboard > .card-wrapper.chart {
+  flex: 1.5 1 60%;
+}
+
+.flex-dashboard > .card-wrapper.growth {
+  flex: 1.2 1 40%;
+}
+
+.flex-dashboard > .card-wrapper.growth .table-responsive table {
+    width: 100%;
+}
+
+@media (max-width: 992px) {
+  .flex-dashboard {
+    flex-wrap: wrap;
+  }
+  
+  .flex-dashboard > .card-wrapper,
+  .flex-dashboard > .card-wrapper.wide {
+    flex: 1 1 100%;
+  }
+}
+
+/* picker filter */
+.custom-filter-group select.custom-select {
+  border-radius: 999px;
+  border: 2px solid #d1d5db;
+  padding: 0 12px;
+  height: 36px;
+  font-size: 0.9rem;
+  width: 110px;
+  background-color: #fff;
+  transition: all 0.2s ease-in-out;
+}
+
+.custom-filter-group select.custom-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+  outline: none;
+}
+
+.custom-submit-btn {
+  background-color: #355641;
+  color: #000;
+  font-weight: 600;
+  border: none;
+  border-radius: 999px;
+  padding: 0 16px;
+  height: 36px;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.custom-submit-btn:hover {
+  background-color: #328b4d;
+}
+
